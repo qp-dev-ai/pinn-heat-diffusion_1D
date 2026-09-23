@@ -12,4 +12,40 @@ Estimation of the temperature field and thermal diffusivity from sparse and nois
 
 ## Status
 
-Work in progress. The code, results, and documentation are currently being organized.
+Work in progress. This repository currently exposes the reference JAX implementation only
+(a much larger set of exploratory scripts and experiment outputs exists locally and is not
+published). Everything here uses `jax.config.update("jax_enable_x64", True)`, a `tanh`
+network, and hard-coded initial/boundary conditions built directly into the network output
+(no soft IC/BC penalty terms). Training is L-BFGS only (`jaxopt.LBFGS`), run directly from
+the initialized weights — there is no Adam warm-up phase.
+
+## Code (`src/TensorFlow/`, despite the folder name — this part is pure JAX)
+
+| Experiment | Script |
+|---|---|
+| Forward problem | `pinn_1d_chaleur_JAX_adam_normalized_comparaison_gpt_LBFGS_hard_BC_hard_IC.py` |
+| Inverse problem, noise-free | `pinn_1d_chaleur_JAX_inverse_LBFGS_hard_BC_hard_IC_robustesse_pb_reel_dataset0.py` |
+| Inverse problem, noisy data | `pinn_1d_chaleur_JAX_inverse_LBFGS_hard_BC_hard_IC_robustesse_pb_reel_dataset0_N_data_pts_bruit.py` |
+| Data-loss weighting study | `pinn_1d_chaleur_JAX_inverse_LBFGS_hard_BC_hard_IC_robustesse_pb_reel_dataset0_N_data_pts_bruit_data_loss_mod.py` |
+
+The first three scripts are self-contained. The weighting-study script relies on shared
+modules also included here: `model.py`, `training.py`, `physique.py`, `plotting.py`,
+`summary.py`, `utils.py`, `generate_noisy_dataset.py`, `drive_utils.py`.
+
+The noise-free inverse script reads `heat1d_inverse_noisy_dataset.csv` (included) instead of
+regenerating data on the fly; the other two generate their dataset at runtime.
+
+### Known limitation
+
+`drive_utils.py` creates a Windows `subst` drive pointing at a path hard-coded in the
+weighting-study script (`BASE_PATH` near the top of the file). It is Windows-specific and
+tied to a local folder layout — edit `BASE_PATH` before running that script elsewhere.
+
+### Dependencies
+
+`jax`, `jaxopt`, `numpy`, `pandas`, `scipy`, `matplotlib`, `tqdm`, `openpyxl`.
+
+## Report
+
+`PINN_report/main.tex` (with `PINN_report/sections/` and `PINN_report/figures/`) is the
+LaTeX source of the project report; `PINN_report/main.pdf` is the compiled version.

@@ -216,3 +216,29 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Project-specific (PINN heat diffusion) ---
+# JAX compilation cache
+jax_cache/
+
+# Experiment outputs / run dumps
+results_*/
+test0/
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# Editor / workspace files
+.vscode/
+*.code-workspace
+
+# Everything not explicitly added is left untracked by default;
+# these patterns just keep known-heavy/generated dirs out even with `git add -A`.

@@ -1,0 +1,188 @@
+\section{PINN Implementations and Computational Frameworks}
+
+The implementation of Physics-Informed Neural Networks (PINNs) strongly depends on the computational framework used to construct the neural network, compute automatic derivatives, and perform the optimization process. Several machine learning libraries are now commonly used for PINN development, each introducing different implementation philosophies, advantages, and technical difficulties.
+
+In practice, implementing PINNs is often significantly more challenging than implementing standard supervised neural networks. PDE residual computation, higher-order automatic differentiation, inverse parameter optimization, and physics-data coupling introduce additional numerical and programming complexity.
+
+This section summarizes the main frameworks investigated in this work and discusses some of the practical implementation challenges encountered during PINN development.
+
+% =========================================================
+\subsection{TensorFlow-Based Implementations}
+% =========================================================
+
+TensorFlow was one of the first major frameworks used for PINN research, and many foundational PINN papers were originally implemented using TensorFlow.
+
+TensorFlow provides:
+\begin{itemize}
+    \item automatic differentiation,
+    \item GPU acceleration,
+    \item scalable optimization tools,
+    \item and compatibility with scientific machine learning workflows.
+\end{itemize}
+
+However, implementing PINNs in TensorFlow can rapidly become technically cumbersome, especially for inverse problems or custom optimization strategies.
+
+One important difficulty arises when using external optimizers such as L-BFGS. TensorFlow neural network parameters are naturally stored as lists of tensors with different shapes, while many scientific optimizers expect a single flattened parameter vector.
+
+As a result, TensorFlow PINN implementations often require:
+\begin{itemize}
+    \item flattening all neural network weights into a single vector,
+    \item unpacking this vector back into tensor structures,
+    \item manually managing parameter reshaping,
+    \item and carefully synchronizing trainable variables during optimization.
+\end{itemize}
+
+This pack/unpack procedure considerably complicates the implementation compared to standard neural network training.
+
+Additional difficulties include:
+\begin{itemize}
+    \item verbose gradient tape management,
+    \item cumbersome higher-order derivative computation,
+    \item graph debugging complexity,
+    \item and numerical instability for stiff PDE-constrained optimization problems.
+\end{itemize}
+
+Although TensorFlow remains powerful, PINN implementations can become relatively heavy and difficult to maintain for research-oriented experimentation.
+
+% =========================================================
+\subsection{PyTorch-Based Implementations}
+% =========================================================
+
+PyTorch became increasingly popular in the scientific machine learning community due to its dynamic computational graph and more intuitive programming style.
+
+Compared to TensorFlow, PyTorch generally offers:
+\begin{itemize}
+    \item simpler debugging,
+    \item cleaner syntax,
+    \item easier prototyping,
+    \item and greater flexibility for custom architectures and training loops.
+\end{itemize}
+
+Automatic differentiation is handled through the \texttt{autograd} engine, which considerably simplifies derivative computations required for PDE residuals.
+
+However, PINN implementations in PyTorch still introduce several technical challenges.
+
+Higher-order derivatives required for PDE residuals often require:
+\begin{itemize}
+    \item repeated graph retention,
+    \item nested automatic differentiation calls,
+    \item and careful memory management.
+\end{itemize}
+
+For example, computing second-order spatial derivatives may require setting:
+
+\begin{equation}
+\texttt{create\_graph=True}
+\end{equation}
+
+during differentiation in order to preserve the computational graph for subsequent derivative evaluations.
+
+As a consequence:
+\begin{itemize}
+    \item memory usage can increase significantly,
+    \item training can become computationally expensive,
+    \item and debugging gradient-related issues may remain difficult.
+\end{itemize}
+
+Inverse problems also introduce optimization difficulties, especially when simultaneously training neural network weights and physical parameters such as $\alpha$.
+
+Despite these challenges, PyTorch remains highly attractive for exploratory PINN research and rapid experimentation.
+
+% =========================================================
+\subsection{JAX-Based Implementations}
+% =========================================================
+
+In this work, particular attention was devoted to JAX-based implementations because of their strong compatibility with scientific computing and differentiable programming.
+
+JAX combines:
+\begin{itemize}
+    \item NumPy-like syntax,
+    \item just-in-time (JIT) compilation,
+    \item efficient vectorization,
+    \item and highly optimized automatic differentiation.
+\end{itemize}
+
+JAX is particularly attractive for PINNs because higher-order derivatives can often be implemented more naturally and efficiently than in other frameworks.
+
+For example:
+\begin{itemize}
+    \item PDE residuals can be vectorized efficiently,
+    \item derivatives can be composed recursively,
+    \item and large collocation point batches can be evaluated very efficiently.
+\end{itemize}
+
+However, JAX also introduces a very different programming philosophy that can initially be challenging.
+
+Unlike TensorFlow or PyTorch, JAX requires a much more explicit and low-level implementation style. Many operations that are implicit in other frameworks must be manually defined.
+
+For example, users often need to explicitly implement:
+\begin{itemize}
+    \item parameter trees,
+    \item forward passes,
+    \item vectorization strategies,
+    \item differentiation pipelines,
+    \item and optimizer update rules.
+\end{itemize}
+
+Another important constraint is that JAX strongly encourages functional programming principles:
+\begin{itemize}
+    \item arrays are immutable,
+    \item functions should remain pure,
+    \item and state management must be handled carefully.
+\end{itemize}
+
+This can initially make the implementation more difficult for users coming from traditional deep learning frameworks.
+
+Debugging can also become complicated due to:
+\begin{itemize}
+    \item JIT compilation,
+    \item tracing behavior,
+    \item and delayed execution mechanisms.
+\end{itemize}
+
+Nevertheless, once mastered, JAX provides extremely powerful tools for scientific machine learning, especially for PDE-constrained optimization and large-scale differentiable simulations.
+
+% =========================================================
+\subsection{Comparison Between Frameworks}
+% =========================================================
+
+Each framework presents different trade-offs between usability, flexibility, computational efficiency, and implementation complexity.
+
+TensorFlow historically dominated early PINN research but often leads to relatively heavy implementations for inverse problems and custom optimizers.
+
+PyTorch offers more intuitive coding and easier experimentation, although higher-order differentiation and memory management can still become difficult for complex PDEs.
+
+JAX provides excellent differentiation and vectorization capabilities for scientific computing applications, but requires a more explicit and technically demanding implementation style.
+
+In practice, the choice of framework depends on:
+\begin{itemize}
+    \item the complexity of the PDE,
+    \item the desired optimization strategy,
+    \item computational performance requirements,
+    \item implementation flexibility,
+    \item and the developer's familiarity with differentiable programming paradigms.
+\end{itemize}
+
+% =========================================================
+\subsection{General Challenges in PINN Implementations}
+% =========================================================
+
+Regardless of the framework used, several numerical and implementation difficulties remain common to most PINN approaches:
+\begin{itemize}
+    \item balancing physics and data losses,
+    \item optimization stiffness,
+    \item sensitivity to hyperparameters,
+    \item efficient computation of higher-order derivatives,
+    \item collocation point sampling strategies,
+    \item and inverse parameter identifiability issues.
+\end{itemize}
+
+PINNs therefore require not only machine learning knowledge, but also a strong understanding of:
+\begin{itemize}
+    \item numerical methods,
+    \item PDEs,
+    \item optimization,
+    \item and scientific computing.
+\end{itemize}
+
+These implementation challenges partly explain why relatively simple benchmark problems remain highly valuable for developing intuition and understanding the practical behavior of PINNs before extending the methodology toward more realistic multiphysics systems.
