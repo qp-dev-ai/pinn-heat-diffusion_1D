@@ -1,6 +1,6 @@
 from drive_utils import create_subst_drive, remove_subst_drive
 from pathlib import Path
-BASE_PATH = r"C:\Users\Quentin\Desktop\PINN\src\TensorFlow"
+BASE_PATH = str(Path(__file__).resolve().parent) # Dossier du script, calculé dynamiquement pour rester portable d'une machine/d'un dossier à l'autre.
 DRIVE = create_subst_drive(BASE_PATH) # Creer un raccourci pour eviter les noms trop longs avec les chemins complets, ce qui peut causer des erreurs de type "OSError: [Errno 36] File name too long" lors de la sauvegarde des fichiers ou de l'accès aux répertoires. En utilisant create_subst_drive, on peut créer un lecteur virtuel pointant vers le répertoire de travail, ce qui permet d'utiliser des chemins plus courts et d'éviter les problèmes liés à la longueur des chemins dans les systèmes de fichiers.
 
 # ===== Standard =====

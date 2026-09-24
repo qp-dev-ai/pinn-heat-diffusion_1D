@@ -37,9 +37,10 @@ regenerating data on the fly; the other two generate their dataset at runtime.
 
 ### Known limitation
 
-`drive_utils.py` creates a Windows `subst` drive pointing at a path hard-coded in the
-weighting-study script (`BASE_PATH` near the top of the file). It is Windows-specific and
-tied to a local folder layout — edit `BASE_PATH` before running that script elsewhere.
+`drive_utils.py` creates a Windows `subst` drive (to work around Windows' path-length limit
+for the long, parameter-derived result folder names). `BASE_PATH` in the weighting-study
+script is resolved automatically from the script's own location, but the `subst` mechanism
+itself is Windows-only and won't work on macOS/Linux.
 
 ### Dependencies
 
