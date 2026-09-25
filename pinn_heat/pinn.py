@@ -21,17 +21,20 @@ residuals = jax.vmap(pde_residual, in_axes=(None, None, 0, 0, None))
 predict = jax.vmap(temperature, in_axes=(None, 0, 0, None))
 
 
-def get_alpha(params, alpha_fixed=None):
+def get_alpha(params, alpha_fixed=None, alpha_param="square"):
     """Known alpha (forward problem) or trainable alpha (inverse problem)."""
-    return alpha_fixed if alpha_fixed is not None else alpha_from_beta(params["beta"])
+    return alpha_fixed if alpha_fixed is not None else alpha_from_beta(params["beta"], alpha_param)
 
 
-def make_loss(tx_col, obs=None, weights=None, alpha_fixed=None, lambda_data=1.0, L=1.0):
+def make_loss(tx_col, obs=None, weights=None, alpha_fixed=None, alpha_param="square", lambda_data=1.0, L=1.0):
     """Total loss  L = L_phys + lambda_data * L_data.
 
     L_phys : mean squared PDE residual on the collocation points.
     L_data : (weighted) mean squared error on the observations, if any:
              sum_i w_i (T_i - T_obs_i)^2 / sum_i w_i.
+
+    Returns loss(params) -> (total, aux), where aux holds L_phys and the
+    *unweighted* data MSE, so that runs with different weights can be compared.
     """
     t_col, x_col = jnp.asarray(tx_col[:, 0]), jnp.asarray(tx_col[:, 1])
     if obs is not None:
@@ -39,13 +42,13 @@ def make_loss(tx_col, obs=None, weights=None, alpha_fixed=None, lambda_data=1.0,
         w = jnp.ones_like(T_d) if weights is None else jnp.asarray(weights)
 
     def loss(params):
-        alpha = get_alpha(params, alpha_fixed)
+        alpha = get_alpha(params, alpha_fixed, alpha_param)
         loss_phys = jnp.mean(residuals(params["nn"], alpha, t_col, x_col, L) ** 2)
         if obs is None:
-            return loss_phys
+            return loss_phys, {"phys": loss_phys, "data": jnp.nan}
         err2 = (predict(params["nn"], t_d, x_d, L) - T_d) ** 2
         loss_data = jnp.sum(w * err2) / jnp.sum(w)
-        return loss_phys + lambda_data * loss_data
+        return loss_phys + lambda_data * loss_data, {"phys": loss_phys, "data": jnp.mean(err2)}
 
     return loss
 
@@ -55,23 +58,25 @@ def snapshot_iterations(maxiter, n_frames=60):
     return set(np.unique(np.geomspace(1, maxiter, n_frames).astype(int)) - 1) | {0}
 
 
-def train_lbfgs(loss, params, maxiter=3000, tol=1e-9, log_every=250, alpha_fixed=None, verbose=True,
-                callback=None, callback_iters=()):
+def train_lbfgs(loss, params, maxiter=3000, tol=1e-9, log_every=250, alpha_fixed=None, alpha_param="square",
+                verbose=True, callback=None, callback_iters=()):
     """Minimize `loss` with L-BFGS (jaxopt), recording loss and alpha history.
 
     If given, `callback(it, params)` is called at the iterations in `callback_iters`
     (used to record snapshots for the training animations).
     """
-    solver = LBFGS(fun=loss, maxiter=maxiter, tol=tol, history_size=10, linesearch="zoom")
+    solver = LBFGS(fun=loss, has_aux=True, maxiter=maxiter, tol=tol, history_size=10, linesearch="zoom")
     state = solver.init_state(params)
     update = jax.jit(solver.update)
 
-    history = {"loss": [], "alpha": []}
+    history = {"loss": [], "loss_phys": [], "loss_data": [], "alpha": []}
     t0 = time.time()
     for it in range(maxiter):
         params, state = update(params, state)
         history["loss"].append(float(state.value))
-        history["alpha"].append(float(get_alpha(params, alpha_fixed)))
+        history["loss_phys"].append(float(state.aux["phys"]))
+        history["loss_data"].append(float(state.aux["data"]))
+        history["alpha"].append(float(get_alpha(params, alpha_fixed, alpha_param)))
         if callback is not None and it in callback_iters:
             callback(it, params)
         if verbose and (it % log_every == 0 or it == maxiter - 1):

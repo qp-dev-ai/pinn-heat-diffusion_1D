@@ -21,16 +21,16 @@ def sensitivity_weights(obs, alpha_est, L=1.0, power=0.5, w_min=0.05):
     return np.maximum((s / (s.max() + 1e-12)) ** power, w_min)
 
 
-def fit_inverse(obs, alpha_init=1.0, weights=None, n_col=500, width=16, depth=3,
+def fit_inverse(obs, alpha_init=1.0, weights=None, alpha_param="square", n_col=500, width=16, depth=3,
                 lambda_data=1.0, maxiter=3000, seed=0, t_max=1.5, L=1.0, verbose=True, **train_kw):
     """Train an inverse PINN; returns (params, history, alpha_estimate).
 
     Extra keyword arguments (e.g. a snapshot callback) are passed to `train_lbfgs`.
     """
-    params = {"nn": init_mlp(jax.random.PRNGKey(seed), width, depth), "beta": beta_from_alpha(alpha_init)}
+    params = {"nn": init_mlp(jax.random.PRNGKey(seed), width, depth), "beta": beta_from_alpha(alpha_init, alpha_param)}
     tx_col = collocation_points(n_col, t_max, L, seed=seed)
-    loss = make_loss(tx_col, obs=obs, weights=weights, lambda_data=lambda_data, L=L)
-    params, hist = train_lbfgs(loss, params, maxiter=maxiter, verbose=verbose, **train_kw)
+    loss = make_loss(tx_col, obs=obs, weights=weights, alpha_param=alpha_param, lambda_data=lambda_data, L=L)
+    params, hist = train_lbfgs(loss, params, maxiter=maxiter, alpha_param=alpha_param, verbose=verbose, **train_kw)
     return params, hist, hist["alpha"][-1]
 
 

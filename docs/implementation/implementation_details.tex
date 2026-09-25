@@ -78,7 +78,23 @@ def temperature(layers, t, x, L=1.0):
 \end{lstlisting}
 
 \subsection{Diffusivity parameterization (inverse problem)}
-The trainable variable is $\beta$, with $\alpha=\alpha_{\min}+\beta^2$ and $\alpha_{\min}=10^{-12}$. This guarantees $\alpha>0$ throughout training. It is initialized at $\beta_0=\sqrt{\alpha_0-\alpha_{\min}}$, with $\alpha_0=1.0$ by default. In the forward problem $\alpha$ is a fixed constant and only the network is trained.
+$\alpha$ is never trained directly. The trainable variable is $\beta$, and three mappings are implemented (\code{alpha\_param}):
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+\code{alpha\_param} & $\alpha(\beta)$ & $d\alpha/d\beta$ & initialization $\beta_0$\\
+\midrule
+\code{"square"} (default) & $\alpha_{\min}+\beta^2$, $\alpha_{\min}=10^{-12}$ & $2\beta$ & $\sqrt{\alpha_0-\alpha_{\min}}$\\
+\code{"softplus"} & $\log(1+e^{\beta})$ & $1/(1+e^{-\beta})$ & $\log(e^{\alpha_0}-1)$\\
+\code{"linear"} & $\beta$ & $1$ & $\alpha_0$\\
+\bottomrule
+\end{tabular}
+\end{center}
+The default is $\alpha_0=1.0$. In the forward problem $\alpha$ is a fixed constant and only the network is trained.
+
+\paragraph{Collapse to the trivial solution.} The choice of mapping matters. With \code{"softplus"}, the very first L-BFGS step moves $\beta$ to a large negative value. On the datasets of Section~\ref{sec:results} this gives $\alpha<10^{-30}$ after one iteration. For $\beta\ll0$, softplus saturates: $\alpha\approx e^{\beta}$ and $d\alpha/d\beta\approx\alpha\approx0$. The gradient with respect to $\beta$ therefore vanishes and $\alpha$ never recovers. The network then settles on a compromise around the trivial value $\alpha=0$, where the PDE reduces to $\partial_t T=0$; both loss terms stay between $10^{-2}$ and $10^{-1}$.
+
+With \code{"square"}, $d\alpha/d\beta=2\beta$ shrinks only linearly as $\alpha\to0$ and never saturates exponentially. $\alpha$ dips to about $0.06$ during the first iterations and recovers once the network has fitted the data. With \code{"linear"}, $\alpha$ becomes negative after the first step ($\approx-0.39$, which is unphysical) and then recovers to the same estimate as \code{"square"}. \code{"square"} is the only mapping that both keeps $\alpha>0$ and avoids the collapse, which is why it is the default.
 
 \section{Loss}
 
@@ -99,6 +115,8 @@ The derivatives are exact, with no finite differences, and they are taken throug
 \end{equation}
 with $\lambda=1$. The weights default to $w_i=1$, in which case $\mathcal{L}_{\text{data}}$ is the ordinary MSE. The forward problem uses $\mathcal{L}_{\text{phys}}$ only. Dividing by $\sum w_i$ keeps the scale of $\mathcal{L}_{\text{data}}$ independent of the weighting law.
 
+The loss function returns the total loss and an auxiliary dictionary holding $\mathcal{L}_{\text{phys}}$ and the \emph{unweighted} data MSE $\frac1{N_d}\sum_i(T_\theta-T_i^{\text{obs}})^2$. These are the loss curves shown in the figures. The unweighted MSE is used so that runs with and without weights can be compared on the same scale.
+
 \section{Optimization}
 Training uses \code{jaxopt.LBFGS} with the settings below. There is no Adam warm-up: L-BFGS starts directly from the initialized weights.
 \begin{center}
@@ -116,12 +134,16 @@ Precision & float64 (\code{jax\_enable\_x64=True})\\
 \end{center}
 The loop is written explicitly so that the history can be recorded:
 \begin{lstlisting}
+solver = LBFGS(fun=loss, has_aux=True, maxiter=3000, tol=1e-9,
+               history_size=10, linesearch="zoom")
 state = solver.init_state(params)
 update = jax.jit(solver.update)
 for it in range(maxiter):
     params, state = update(params, state)
     history["loss"].append(float(state.value))
-    history["alpha"].append(float(get_alpha(params)))
+    history["loss_phys"].append(float(state.aux["phys"]))
+    history["loss_data"].append(float(state.aux["data"]))
+    history["alpha"].append(float(get_alpha(params, alpha_param=alpha_param)))
     if not np.isfinite(history["loss"][-1]) or float(state.error) < tol:
         break
 \end{lstlisting}
@@ -148,10 +170,14 @@ The weights enter the data term only. The PDE residual must hold everywhere, inc
 \begin{itemize}
 \item \textbf{Forward error.} The prediction is evaluated on a uniform $200\times200$ grid over $[0,t_{\max}]\times[0,L]$. The script reports the relative error $\|T_\theta-T\|_2/\|T\|_2$ and the maximum absolute error.
 \item \textbf{Inverse error.} The script reports $|\hat\alpha-\alpha|/\alpha$, where $\hat\alpha$ is the value after the last iteration.
-\item \textbf{Animations.} A callback records $T_\theta(x,t_k)$ on 120 points in $x$, at $t_k\in\{0,0.15,0.4,0.8,1.5\}$. It does so at 60 log-spaced iterations (\code{np.geomspace(1, maxiter, 60)}), plus the first and last iterations. Log spacing is used because L-BFGS changes the solution mostly in the first tens of iterations. The GIFs play at 10 fps and hold the final frame for 20 frames. In the inverse animation the observations are coloured by their time $t_i$ but plotted against $x$ only, so they do not lie exactly on the displayed profiles.
+\item \textbf{Animations.} A callback records $T_\theta(x,t_k)$ on 120 points in $x$. It does so at 60 log-spaced iterations (\code{np.geomspace(1, maxiter, 60)}), plus the first and last iterations. Log spacing is used because L-BFGS changes the solution mostly in the first tens of iterations. The GIFs play at 10 fps and hold the final frame for 20 frames.
+\begin{itemize}
+\item \emph{Forward GIF:} profiles at $t_k\in\{0,0.15,0.4,0.8,1.5\}$, next to the physics loss.
+\item \emph{Inverse GIF:} three panels. (i) Profiles at $t_k\in\{0,0.4,0.8\}$ of the sensitivity-weighted run, with the observations coloured by their time $t_i$. They are plotted against $x$ only, so they do not lie exactly on the displayed profiles. (ii) $\alpha$ against iteration for the three variants of Section~\ref{sec:results}. (iii) Physics loss (solid) and unweighted data MSE (dashed) for the same three variants.
+\end{itemize}
 \end{itemize}
 
-\section{Results}
+\section{Results}\label{sec:results}
 
 \subsection{Forward problem}
 For $\alpha=0.18$ with seed 0 and 3000 iterations, the final physics loss is $1.38\times10^{-7}$. The relative $L^2$ error is $6.34\times10^{-5}$ and the maximum absolute error $6.17\times10^{-5}$. The run takes 33\,s on a laptop CPU when nothing else is running.
@@ -162,17 +188,29 @@ For $\alpha=0.18$ with seed 0 and 3000 iterations, the final physics loss is $1.
 \caption{Forward problem, \code{python scripts/forward.py}.}
 \end{figure}
 
-\subsection{Inverse problem, single run}
-Settings: $\alpha=0.18$, 25 points drawn, 24 kept, $\eta=10\%$, data seed 0, $\alpha_0=1.0$. The unweighted fit gives $\hat\alpha=0.17800$ (1.11\% error). The two-stage sensitivity-weighted fit gives $\hat\alpha=0.17881$ (0.66\% error).
+\subsection{Inverse problem, single dataset}
+\code{scripts/inverse.py} solves one dataset with three variants: \code{"square"} unweighted, \code{"square"} sensitivity-weighted (weights from the unweighted estimate), and \code{"softplus"} unweighted. Default settings: $\alpha=0.5$, $\eta=20\%$, data seed 0, 25 points drawn of which 18 are kept, $\alpha_0=1.0$.
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Variant & $\hat\alpha$ & relative error\\
+\midrule
+\code{"square"}, unweighted & 0.44991 & 10.02\%\\
+\code{"square"}, sensitivity-weighted & 0.46899 & 6.20\%\\
+\code{"softplus"}, unweighted & $5.9\times10^{-32}$ & 100\% (collapse)\\
+\bottomrule
+\end{tabular}
+\end{center}
+This dataset was chosen for the figure because the weighting makes a visible difference; averages over many datasets are given in Section~\ref{sec:robust}. For a more typical case ($\alpha=0.18$, $\eta=10\%$, 24 of 25 points kept), the unweighted and weighted fits give $0.17800$ (1.11\%) and $0.17881$ (0.66\%). With \code{"softplus"}, the same collapse to $\alpha\approx5\times10^{-32}$ occurs.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{inverse_field_none.png}
-\includegraphics[width=0.55\linewidth]{inverse_alpha_sensitivity.png}
-\caption{Top: unweighted inverse reconstruction (\code{python scripts/inverse.py}). Bottom: evolution of $\alpha$ during the two stages (\code{--weighting sensitivity}).}
+\includegraphics[width=\linewidth]{inverse_field.png}
+\includegraphics[width=\linewidth]{inverse_alpha_losses.png}
+\caption{Top: sensitivity-weighted inverse reconstruction. Bottom: $\alpha$ and loss histories of the three variants (\code{python scripts/inverse.py}).}
 \end{figure}
 
-\subsection{Robustness study}
+\subsection{Robustness study}\label{sec:robust}
 \textbf{Protocol} (\code{scripts/robustness\_study.py}):
 \begin{itemize}
 \item $\alpha\in\{0.18,0.5\}$, $\eta\in\{5,10,20\}\%$ and data seeds $\{0,1,2\}$, with $N_d=25$ drawn points and $\alpha_0=1.0$.
@@ -204,6 +242,8 @@ $\alpha_{\text{true}}$ & noise & unweighted & sensitivity-weighted\\
 \item \textbf{Effect of the weighting.} It depends on the regime. For $\alpha=0.18$ it changes nothing measurable (mean errors within $0.05$ percentage points). For $\alpha=0.5$ it reduces the mean error by about one third at every noise level, and the worst case at $20\%$ noise from $10.0\%$ to $6.2\%$. This matches the sensitivity analysis: faster diffusion shrinks the window $t\sim t^\ast=1/(\alpha\pi^2)$ in which measurements are informative, so down-weighting uninformative points matters more.
 \item \textbf{Systematic bias.} In all 36 cases $\alpha$ is \emph{underestimated}. A likely cause is the removal of negative measurements. At late times the true temperature is close to zero, so the discarded points are preferentially those with negative noise. The retained late-time data are therefore biased upward, which mimics slower decay, i.e.\ a smaller $\alpha$. Testing this would require repeating the study without the filtering.
 \end{itemize}
+
+%DATA_SIZE
 
 \section{Reproducibility}
 \begin{center}

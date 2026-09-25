@@ -39,14 +39,33 @@ def temperature(layers, t, x, L=1.0):
     return jnp.sin(jnp.pi * x / L) + t * x * (L - x) * n
 
 
-# Positivity of the diffusivity is enforced by the reparameterization
-# alpha = alpha_floor + beta^2, with beta the trainable variable.
+# The diffusivity is trained through an auxiliary variable beta:
+#   "square"   : alpha = alpha_floor + beta^2   (default)
+#   "softplus" : alpha = softplus(beta)
+#   "linear"   : alpha = beta                   (no reparameterization)
+# With "square", d(alpha)/d(beta) = 2 beta shrinks as alpha -> 0, which slows the
+# drift of alpha toward the trivial solution alpha = 0 early in training, while
+# the network has not yet fitted the data.
 ALPHA_FLOOR = 1e-12
+ALPHA_PARAMS = ("square", "softplus", "linear")
 
 
-def alpha_from_beta(beta):
-    return ALPHA_FLOOR + beta**2
+def alpha_from_beta(beta, param="square"):
+    if param == "square":
+        return ALPHA_FLOOR + beta**2
+    if param == "softplus":
+        return jax.nn.softplus(beta)
+    if param == "linear":
+        return beta
+    raise ValueError(f"unknown alpha parameterization: {param}")
 
 
-def beta_from_alpha(alpha):
-    return jnp.sqrt(jnp.maximum(alpha - ALPHA_FLOOR, 0.0))
+def beta_from_alpha(alpha, param="square"):
+    alpha = jnp.asarray(alpha, dtype=jnp.float64)
+    if param == "square":
+        return jnp.sqrt(jnp.maximum(alpha - ALPHA_FLOOR, 0.0))
+    if param == "softplus":
+        return jnp.log(jnp.expm1(alpha))
+    if param == "linear":
+        return alpha
+    raise ValueError(f"unknown alpha parameterization: {param}")

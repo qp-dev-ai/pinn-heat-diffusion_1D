@@ -36,7 +36,7 @@ which satisfies the initial and boundary conditions exactly for any weights~\cit
 \begin{equation}
 \mathcal{L}(\theta,\alpha) = \frac{1}{N_f}\sum_{j=1}^{N_f} R(x_j,t_j)^2 \;+\; \lambda\,\frac{\sum_i w_i\,\big(T_\theta(x_i,t_i)-T_i^{\mathrm{obs}}\big)^2}{\sum_i w_i},
 \end{equation}
-with $w_i=1$ unless stated otherwise. In the inverse problem, positivity of the diffusivity is enforced by the reparameterization $\alpha=\alpha_{\min}+\beta^2$, where $\beta$ is trained jointly with $\theta$.
+with $w_i=1$ unless stated otherwise. In the inverse problem, the diffusivity is parameterized as $\alpha=\alpha_{\min}+\beta^2$, with $\beta$ trained jointly with $\theta$. This keeps $\alpha$ positive and, as shown in Section~\ref{sec:inverse}, avoids a collapse to the trivial solution $\alpha=0$.
 
 \paragraph{Optimization.} All computations use double precision. The loss is minimized with L-BFGS (\texttt{jaxopt}, zoom line search, 3000 iterations) from the initial weights, with no Adam warm-up. The collocation points are kept fixed during the optimization.
 
@@ -50,13 +50,16 @@ With $\alpha=0.18$ known and no data, the PINN reaches a physics loss of $1.4\ti
 \label{fig:forward}
 \end{figure}
 
-\section{Inverse problem}
-Starting from $\alpha_0=1.0$, the PINN recovers $\hat\alpha=0.1780$ ($1.1\%$ error) from 24 measurements with $10\%$ noise, while reconstructing the full field (Fig.~\ref{fig:inverse}). The estimate first undershoots to $\alpha\approx0.06$ during the early iterations. It then settles once the network has fitted the data.
+\section{Inverse problem}\label{sec:inverse}
+Starting from $\alpha_0=1.0$, the PINN recovers $\hat\alpha=0.1780$ ($1.1\%$ error) from 24 measurements with $10\%$ noise ($\alpha=0.18$). In the harder case $\alpha=0.5$ with $20\%$ noise and 18 retained measurements, it recovers $0.450$ ($10\%$ error), or $0.469$ ($6.2\%$) with sensitivity weighting (Fig.~\ref{fig:inverse}). In both cases the estimate first undershoots to $\alpha\approx0.06$ during the early iterations and then settles once the network has fitted the data.
+
+\paragraph{Collapse to $\alpha=0$.} The parameterization of $\alpha$ is critical. With $\alpha=\mathrm{softplus}(\beta)$, the first L-BFGS step drives $\beta$ strongly negative. Softplus then saturates ($\alpha\approx10^{-31}$, $d\alpha/d\beta\approx0$), the gradient with respect to $\beta$ vanishes, and training stays stuck near the trivial solution $\alpha=0$, with both losses between $10^{-2}$ and $10^{-1}$. With $\alpha=\alpha_{\min}+\beta^2$, the derivative $2\beta$ vanishes only linearly, and $\alpha$ recovers from its early dip.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{inverse_field_none.png}
-\caption{Inverse problem: reconstructed field with the measurement locations (white dots), exact solution and absolute error.}
+\includegraphics[width=\linewidth]{inverse_field.png}
+\includegraphics[width=\linewidth]{inverse_alpha_losses.png}
+\caption{Inverse problem ($\alpha=0.5$, $20\%$ noise). Top: sensitivity-weighted reconstruction with the measurement locations (white dots). Bottom: $\alpha$ and loss histories for softplus (collapse), $\beta^2$ unweighted and $\beta^2$ sensitivity-weighted.}
 \label{fig:inverse}
 \end{figure}
 
@@ -106,6 +109,8 @@ $\alpha_{\text{true}}$ & noise & unweighted & sensitivity-weighted\\
 \item \textbf{Effect of the weighting.} It depends on the regime. For $\alpha=0.18$ it changes nothing measurable (mean errors within $0.05$ percentage points). For $\alpha=0.5$ it reduces the mean error by about one third at every noise level, and the worst case at $20\%$ noise from $10.0\%$ to $6.2\%$. This matches the sensitivity analysis: faster diffusion shrinks the window $t\sim t^\ast=1/(\alpha\pi^2)$ in which measurements are informative, so down-weighting uninformative points matters more.
 \item \textbf{Systematic bias.} In all 36 cases $\alpha$ is \emph{underestimated}. A likely cause is the removal of negative measurements. At late times the true temperature is close to zero, so the discarded points are preferentially those with negative noise. The retained late-time data are therefore biased upward, which mimics slower decay, i.e.\ a smaller $\alpha$. Testing this would require repeating the study without the filtering.
 \end{itemize}
+
+%DATA_SIZE
 
 \section{Conclusions and perspectives}
 Hard constraints, float64 arithmetic and L-BFGS together give a PINN that is accurate and reproducible on this benchmark. The inverse problem is limited less by the network's ability to approximate the field than by how much information the data carry about the parameter. Every result should therefore be reported over several datasets and seeds. Adaptive loss balancing~\cite{wang2021} is a complementary lever that was not used here. Next steps are:

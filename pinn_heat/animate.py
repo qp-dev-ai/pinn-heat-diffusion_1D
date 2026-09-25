@@ -85,3 +85,70 @@ def training_gif(path, rec, alpha_true, history, curve="loss", obs=None, title="
 
     FuncAnimation(fig, draw, frames=frames, blit=False).save(path, writer=PillowWriter(fps=fps))
     plt.close(fig)
+
+
+def inverse_comparison_gif(path, rec, runs, alpha_true, obs, title="", fps=10, hold=20):
+    """Inverse problem, several training variants side by side.
+
+    Left: T(x, t_k) of the run whose snapshots are in `rec` (solid) vs exact (dashed) + data.
+    Middle: alpha vs iteration for every run. Right: physics loss (solid) and data MSE (dashed).
+    `runs` is a list of dicts with keys "label", "color", "hist".
+    """
+    colors = cm.viridis(np.linspace(0, 0.75, len(rec.times)))
+    T_exact = exact_solution(rec.x[None, :], rec.times[:, None], alpha_true, rec.L)
+
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 4.2), gridspec_kw={"width_ratios": [1.15, 1, 1]},
+                                        constrained_layout=True)
+    fig.suptitle(title, fontsize=11)
+
+    # Profiles
+    lines = []
+    for k, (tk, c) in enumerate(zip(rec.times, colors)):
+        ax1.plot(rec.x, T_exact[k], ls="--", lw=1.2, color="0.35")
+        lines.append(ax1.plot(rec.x, rec.profiles[0][k], color=c, lw=2.4, label=f"t = {tk:g}")[0])
+    ax1.scatter(obs["x"], obs["T_obs"], c=obs["t"], cmap="viridis", vmin=0, vmax=rec.times.max() / 0.75,
+                s=22, edgecolors="black", linewidths=0.5, zorder=5, label="noisy data (colour = time)")
+    ax1.plot([], [], ls="--", color="0.35", label="exact")
+    ax1.set(xlabel="x", ylabel="T(x, t)", ylim=(-0.2, 1.2), title=f"Temperature profiles ({runs[-1]['label']})")
+    ax1.legend(fontsize=7.5, loc="upper right")
+
+    # alpha and losses
+    n_it = max(len(r["hist"]["alpha"]) for r in runs)
+    its = np.arange(1, n_it + 1)
+    ax2.axhline(alpha_true, color="black", ls=":", lw=1.5, label=f"true alpha = {alpha_true}")
+    traces = []
+    for r in runs:
+        h = r["hist"]
+        a = ax2.plot([], [], color=r["color"], lw=2, label=r["label"])[0]
+        lp = ax3.plot([], [], color=r["color"], lw=2)[0]
+        ld = ax3.plot([], [], color=r["color"], lw=1.5, ls="--")[0]
+        traces.append((h, a, lp, ld))
+    ax2.set(xscale="log", xlim=(1, n_it * 1.2), ylim=(-0.03, 1.05), xlabel="L-BFGS iteration", ylabel="alpha",
+            title="Estimated diffusivity")
+    ax2.legend(fontsize=7.5, loc="upper right")
+    ax3.plot([], [], color="0.3", lw=2, label="physics loss (PDE residual)")
+    ax3.plot([], [], color="0.3", lw=1.5, ls="--", label="data MSE")
+    all_l = np.concatenate([np.r_[r["hist"]["loss_phys"], r["hist"]["loss_data"]] for r in runs])
+    all_l = all_l[np.isfinite(all_l) & (all_l > 0)]
+    ax3.set(xscale="log", yscale="log", xlim=(1, n_it * 1.2), ylim=(all_l.min() / 3, all_l.max() * 3),
+            xlabel="L-BFGS iteration", ylabel="loss", title="Training losses")
+    ax3.legend(fontsize=7.5, loc="lower left")
+    label = ax2.text(0.03, 0.05, "", transform=ax2.transAxes, fontsize=9,
+                     bbox=dict(boxstyle="round", fc="white", ec="0.8"))
+
+    frames = list(range(len(rec.iters))) + [len(rec.iters) - 1] * hold
+
+    def draw(f):
+        it = rec.iters[f]
+        for k, ln in enumerate(lines):
+            ln.set_ydata(rec.profiles[f][k])
+        for h, a, lp, ld in traces:
+            j = min(it, len(h["alpha"]) - 1) + 1
+            a.set_data(its[:j], h["alpha"][:j])
+            lp.set_data(its[:j], h["loss_phys"][:j])
+            ld.set_data(its[:j], h["loss_data"][:j])
+        label.set_text(f"iteration {it + 1}")
+        return lines + [label]
+
+    FuncAnimation(fig, draw, frames=frames, blit=False).save(path, writer=PillowWriter(fps=fps))
+    plt.close(fig)
