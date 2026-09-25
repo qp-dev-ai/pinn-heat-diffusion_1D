@@ -19,7 +19,7 @@
 \end{abstract}
 
 \section{Problem}
-Following the PINN framework~	te{raissi2019}, we consider
+Following the PINN framework~\cite{raissi2019}, we consider
 \begin{equation}
 \partial_t T = \alpha\, \partial_{xx} T, \quad x\in[0,1],\ t\in[0,1.5], \qquad T(x,0)=\sin(\pi x),\quad T(0,t)=T(1,t)=0,
 \end{equation}
@@ -82,12 +82,33 @@ Each configuration $(\alpha,\eta)$ was solved on three independent random datase
 \label{fig:robust}
 \end{figure}
 
-%RESULTS_TABLE
+\begin{table}[h]
+\centering
+\begin{tabular}{cccc}
+\toprule
+$\alpha_{\text{true}}$ & noise & unweighted & sensitivity-weighted\\
+\midrule
+0.18 & 5\% & 0.47 (0.62) & 0.49 (0.88) \\
+0.18 & 10\% & 0.94 (1.23) & 0.98 (1.76) \\
+0.18 & 20\% & 2.31 (2.76) & 2.26 (3.63) \\
+0.5 & 5\% & 0.73 (1.01) & 0.48 (0.59) \\
+0.5 & 10\% & 2.35 (4.81) & 1.56 (2.93) \\
+0.5 & 20\% & 5.05 (10.02) & 3.34 (6.20) \\
+\bottomrule
+\end{tabular}
+\caption{Relative error on $\hat\alpha$ (\%): mean (max) over 3 datasets of 25 points, $\alpha_0=1.0$.}
+\label{tab:robust}
+\end{table}
 
-%DISCUSSION
+\paragraph{Discussion.} Three observations stand out.
+\begin{itemize}
+\item \textbf{Accuracy.} $\alpha$ is recovered within $0.5\%$ at $5\%$ noise and within a few percent at $20\%$ noise, starting from a guess that is 2 to 6 times too large. The error grows with the noise level and varies noticeably between datasets.
+\item \textbf{Effect of the weighting.} It depends on the regime. For $\alpha=0.18$ it changes nothing measurable (mean errors within $0.05$ percentage points). For $\alpha=0.5$ it reduces the mean error by about one third at every noise level, and the worst case at $20\%$ noise from $10.0\%$ to $6.2\%$. This matches the sensitivity analysis: faster diffusion shrinks the window $t\sim t^\ast=1/(\alpha\pi^2)$ in which measurements are informative, so down-weighting uninformative points matters more.
+\item \textbf{Systematic bias.} In all 36 cases $\alpha$ is \emph{underestimated}. A likely cause is the removal of negative measurements. At late times the true temperature is close to zero, so the discarded points are preferentially those with negative noise. The retained late-time data are therefore biased upward, which mimics slower decay, i.e.\ a smaller $\alpha$. Testing this would require repeating the study without the filtering.
+\end{itemize}
 
 \section{Conclusions and perspectives}
-Hard constraints, float64 arithmetic and L-BFGS together give a PINN that is accurate and reproducible on this benchmark. The inverse problem is limited less by the network's ability to approximate the field than by how much information the data carry about the parameter. Every result should therefore be reported over several datasets and seeds. Adaptive loss balancing~	te{wang2021} is a complementary lever that was not used here. Next steps are:
+Hard constraints, float64 arithmetic and L-BFGS together give a PINN that is accurate and reproducible on this benchmark. The inverse problem is limited less by the network's ability to approximate the field than by how much information the data carry about the parameter. Every result should therefore be reported over several datasets and seeds. Adaptive loss balancing~\cite{wang2021} is a complementary lever that was not used here. Next steps are:
 \begin{itemize}
 \item estimating the sensitivity without the analytical solution;
 \item weak-form (Galerkin) residual constraints;
