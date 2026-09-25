@@ -1,0 +1,7 @@
+jax>=0.4.30
+jaxopt>=0.8
+numpy
+scipy
+pandas
+matplotlib
+pillow
