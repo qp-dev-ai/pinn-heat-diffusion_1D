@@ -7,11 +7,11 @@
 
 ---
 
-This repository contains a compact implementation of physics-informed neural networks (PINNs) for the one-dimensional heat equation.
+This repository contains a compact implementation of **physics-informed neural networks (PINNs)** for the one-dimensional heat equation.
 
 ## Why PINNs?
 
-Over the past few years, **Scientific Machine Learning (SciML)** has grown in popularity for its ability to speed up scientific research and innovation. Unlike most established machine learning models, which learn only from data, SciML injects scientific knowledge into the learning process. PINNs are one SciML methodology: they train on the governing physical equations alongside experimental data, ensuring predictions stay consistent with the physics. With recent advances, SciML could benefit research and industry by bypassing the cost of expensive experiments and simulations.
+Over the past few years, **Scientific Machine Learning (SciML)** has grown in popularity for its ability to speed up scientific research and innovation. Unlike most established machine learning models, which learn only from data, SciML injects scientific knowledge into the learning process. **PINNs** are one SciML methodology: they train on the governing physical equations alongside experimental data, ensuring predictions stay consistent with the physics. With recent advances, SciML could benefit research and industry by bypassing the cost of expensive experiments and simulations.
 
 ## The problem
 
