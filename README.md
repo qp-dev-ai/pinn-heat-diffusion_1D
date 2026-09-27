@@ -31,10 +31,13 @@ The one-dimensional **heat problem** studied here is well known, with an exact s
 ## Equation and analytical solution
 
 The equation for the 1D heat diffusion problem is:
+
 $$
 \frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2}, \qquad x \in [0, L],\ t \in [0, t_{\max}]
 $$
+
 The initial conditions are:
+
 - $T(x, 0) = \sin(\pi x / L)$: the bar's **initial temperature profile**, hot in the middle and zero at the ends;
 - $T(0, t) = 0$ and $T(L, t) = 0$ for every $t$ up to $t_{\max}$: **both ends sit in an infinite $T=0$ reservoir**, so heat continuously drains out there.
 
