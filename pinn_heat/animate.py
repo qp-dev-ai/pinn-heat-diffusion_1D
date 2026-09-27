@@ -24,8 +24,7 @@ def diffusion_bar_gif(path, alphas, L=1.0, t_max=1.5, n_x=400, n_frames_per_alph
     frames = [(alpha, t) for alpha in alphas for t in times] + \
              [(alphas[-1], times[-1])] * hold
 
-    fig, ax = plt.subplots(figsize=(7.5, 2.2), constrained_layout=True)
-    fig.suptitle("Heat diffusion along a 1D bar", fontsize=11)
+    fig, ax = plt.subplots(figsize=(7.5, 2.6), constrained_layout=True)
 
     T0 = exact_solution(x, 0.0, alphas[0], L)[None, :]
     im = ax.imshow(T0, aspect="auto", cmap=cmap, vmin=0, vmax=1, extent=[0, L, 0, 1])
@@ -33,8 +32,10 @@ def diffusion_bar_gif(path, alphas, L=1.0, t_max=1.5, n_x=400, n_frames_per_alph
     ax.set_xlabel("x (m)")
     fig.colorbar(im, ax=ax, label="T(x, t)  [dimensionless]")
 
-    label_alpha = ax.text(0.5, 1.42, "", transform=ax.transAxes, ha="center", fontsize=13,
-                          color=ORANGE, bbox=dict(boxstyle="round", fc="white", ec=ORANGE, lw=1.5))
+    # All three lines share ax.transAxes so they stay centred on the strip, not the whole figure.
+    title = ax.text(0.5, 1.65, "Heat diffusion along a 1D bar", transform=ax.transAxes, ha="center",
+                     fontsize=11)
+    label_alpha = ax.text(0.5, 1.38, "", transform=ax.transAxes, ha="center", fontsize=13, color=ORANGE)
     label_t = ax.text(0.5, 1.14, "", transform=ax.transAxes, ha="center", fontsize=10, color="0.3")
 
     def draw(f):

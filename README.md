@@ -15,6 +15,12 @@ Over the past few years, **Scientific Machine Learning (SciML)** has grown in po
 
 ## The problem
 
+<p align="center">
+  <img src="figures/diffusion_alpha.gif" width="70%">
+</p>
+
+**Fig 0:** *Heat diffusing along the bar for different diffusivities $\alpha$* (m²/s). Larger $\alpha$ means faster diffusion: the bar reaches equilibrium ($T=0$ everywhere) sooner. **[Try the interactive version](docs/interactive/heat_bar_explorer.html)** — adjust $\alpha$ and the initial condition live (clone the repo and open the file in a browser).
+
 The one-dimensional heat equation studied here has a well-known analytical solution, which turns it into a **controlled laboratory**: every difficulty that shows up on realistic problems — optimization dynamics, parameter identifiability, sensitivity to noise — can be checked against ground truth, which is exactly what lets the methodology be pushed to its limits.
 
 $$
@@ -26,12 +32,6 @@ T(x, 0) = \sin(\pi x), \qquad T(0, t) = T(1, t) = 0
 $$
 
 Both ends of the bar sit in an infinite $T=0$ reservoir, so heat continuously drains out at $x=0$ and $x=L$. The exact solution is $T(x,t) = \sin(\pi x)\, e^{-\alpha \pi^2 t}$ ($T$ is dimensionless, normalized so the initial peak is 1); it is used only to generate synthetic measurements and to evaluate the PINN.
-
-<p align="center">
-  <img src="figures/diffusion_alpha.gif" width="70%">
-</p>
-
-**Fig 0:** *Heat diffusing along the bar for different diffusivities $\alpha$* (m²/s). Larger $\alpha$ means faster diffusion: the bar reaches equilibrium ($T=0$ everywhere) sooner. **[Try the interactive version](docs/interactive/heat_bar_explorer.html)** — adjust $\alpha$ and the initial condition live (clone the repo and open the file in a browser).
 
 ## Forward problem
 
