@@ -29,13 +29,14 @@ def diffusion_bar_gif(path, alphas, L=1.0, t_max=1.5, n_x=400, n_frames_per_alph
     T0 = exact_solution(x, 0.0, alphas[0], L)[None, :]
     im = ax.imshow(T0, aspect="auto", cmap=cmap, vmin=0, vmax=1, extent=[0, L, 0, 1])
     ax.set_yticks([])
-    ax.set_xlabel("x (m)")
+    ax.set_xticks([0, L / 2, L], labels=["0", "L/2", "L"])
+    ax.set_xlabel("x")
     fig.colorbar(im, ax=ax, label="T(x, t)  [dimensionless]")
 
     # All three lines share ax.transAxes so they stay centred on the strip, not the whole figure.
     title = ax.text(0.5, 1.65, "Heat diffusion along a 1D bar", transform=ax.transAxes, ha="center",
                      fontsize=11)
-    label_alpha = ax.text(0.5, 1.38, "", transform=ax.transAxes, ha="center", fontsize=13, color=ORANGE)
+    label_alpha = ax.text(0.5, 1.38, "", transform=ax.transAxes, ha="center", fontsize=13, color="black")
     label_t = ax.text(0.5, 1.14, "", transform=ax.transAxes, ha="center", fontsize=10, color="0.3")
 
     def draw(f):
