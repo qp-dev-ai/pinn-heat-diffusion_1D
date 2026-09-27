@@ -7,16 +7,20 @@
 
 ---
 
-This repository contains a compact **JAX** implementation of physics-informed neural networks (PINNs) for the one-dimensional heat equation. It solves:
+This repository contains a compact implementation of physics-informed neural networks (PINNs) for the one-dimensional heat equation (JAX, PyTorch or TensorFlow). It solves:
 
 - the **forward problem**: given the thermal diffusivity $\alpha$, reconstruct the temperature field $T(x,t)$ from the physics alone, with no data;
 - the **inverse problem**: estimate the unknown diffusivity $\alpha$ together with $T(x,t)$ from **sparse and noisy temperature measurements**.
 
-The 1D heat equation has an analytical solution. That makes it a controlled setting for studying how PINNs behave: optimization, parameter identifiability, and robustness to noise and to the amount of data. The problems met here are the same ones met on realistic problems.
+## Why PINNs?
+
+Physics-Informed Neural Networks train a neural network to satisfy a governing differential equation directly, not only to fit data: alongside the usual data loss, the network is penalized whenever its predictions violate the PDE, using automatic differentiation to compute the required derivatives exactly. This makes PINNs a core tool in **Scientific Machine Learning (SciML)**, a growing field that combines data-driven learning with physics-based modeling to improve predictive accuracy, reduce data requirements, and keep models physically consistent.
+
+PINNs are particularly attractive whenever the governing equations are known but measurements are sparse, noisy, or expensive — a common situation in heat transfer, fluid mechanics, solid mechanics, and inverse parameter estimation, where physical parameters (diffusivities, permeabilities, reaction rates, boundary conditions) often cannot be measured directly and must be inferred from limited experimental data.
+
+The one-dimensional heat equation studied here has a well-known analytical solution. That turns it into a **controlled laboratory**: every difficulty that shows up on realistic problems — optimization dynamics, parameter identifiability, sensitivity to noise, collocation point selection — can be checked against ground truth instead of guessed at, which is exactly what lets the methodology be pushed to its limits before tackling problems where no exact solution exists.
 
 ## The problem
-
-PINNs train a network to satisfy a governing PDE directly, not just to fit data — useful whenever physical knowledge is available but measurements are sparse and noisy. The 1D heat equation is one of the few PDEs with a closed-form solution, which makes it a controlled benchmark: every aspect of training (optimization, parameter identifiability, robustness to noise) can be checked against ground truth instead of guessed at.
 
 $$
 \frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2}, \qquad x \in [0, 1]\ \text{m},\ t \in [0, 1.5]\ \text{s}
