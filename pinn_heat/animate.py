@@ -36,7 +36,7 @@ def diffusion_bar_gif(path, alphas, L=1.0, t_max=1.5, n_x=400, n_frames_per_alph
     # All three lines share ax.transAxes so they stay centred on the strip, not the whole figure.
     title = ax.text(0.5, 1.65, "Heat diffusion along a 1D bar", transform=ax.transAxes, ha="center",
                      fontsize=11)
-    label_alpha = ax.text(0.5, 1.38, "", transform=ax.transAxes, ha="center", fontsize=13, color="black")
+    label_alpha = ax.text(0.5, 1.38, "", transform=ax.transAxes, ha="center", fontsize=13, color="#b85c1e")
     label_t = ax.text(0.5, 1.14, "", transform=ax.transAxes, ha="center", fontsize=10, color="0.3")
 
     def draw(f):

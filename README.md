@@ -21,12 +21,12 @@ Over the past few years, **Scientific Machine Learning (SciML)** has grown in po
 
 **Fig 0:** Heat diffusion along a bar of arbitrary length $L$, for different diffusivities $\alpha$ (m²/s). Larger $\alpha$ means faster diffusion: the bar reaches equilibrium (temperature $T$ equals 0 everywhere) sooner. **[Try the interactive version](docs/interactive/heat_bar_explorer.html)** — adjust $\alpha$ and the initial condition live (clone the repo and open the file in a browser).
 
-In words: a metal bar starts hot in the middle, with both ends held at zero temperature, so heat drains out and the bar cools down over time. The cooling speed depends on the thermal diffusivity, which depends on the bar's material properties. This gives two questions:
+A bar of arbitrary material (metal, ceramic, etc.) **starts hot in the middle, with both ends held at zero temperature**, so heat drains out and the bar cools down over time. **The cooling speed depends on the thermal diffusivity**, which depends on the bar's material properties. This gives two questions:
 
 - the **forward problem**: given the thermal diffusivity, what does the temperature look like everywhere, at every time?
 - the **inverse problem**: given only a few noisy temperature measurements, what is the thermal diffusivity?
 
-The one-dimensional heat equation studied here is well known, with an exact solution, which turns it into a **controlled laboratory** that lets the PINN methodology be pushed to its limits. It is therefore a good benchmark before applying PINNs to more realistic, non-ideal problems.
+The one-dimensional **heat problem** studied here is well known, with an exact solution, which turns it into a **controlled laboratory that lets the PINN methodology be pushed to its limits**. It is therefore a **good benchmark before applying PINNs to more realistic, non-ideal problems**.
 
 ## Equation and analytical solution
 
@@ -41,7 +41,7 @@ $$
 - $T(x, 0) = \sin(\pi x / L)$: the bar's **initial temperature profile**, hot in the middle and zero at the ends;
 - $T(0, t) = 0$ and $T(L, t) = 0$ for every $t$ up to $t_{\max}$: both ends sit in an infinite $T=0$ reservoir, so heat continuously drains out there.
 
-The exact solution is $T(x,t) = \sin(\pi x / L) \cdot e^{-\alpha (\pi/L)^2 t}$ ($T$ is dimensionless, normalized so the initial peak is 1); it is used only to generate synthetic measurements and to evaluate the PINN.
+The exact solution is $T(x,t) = \sin(\pi x / L) \cdot e^{-\alpha (\pi/L)^2 t}$ ($T$ is dimensionless, normalized so the initial peak is 1).
 
 ## Forward problem
 
