@@ -41,7 +41,7 @@ The initial conditions are:
 - $T(x, 0) = \sin(\pi x / L)$: **the bar's initial temperature profile, hot in the middle and zero at the ends**;
 - $T(0, t) = 0$ and $T(L, t) = 0$ for every $t$ up to $t_{\max}$: **both ends sit in an infinite $T=0$ reservoir**, so heat continuously drains out there.
 
-The exact solution is $\mathbf{T(x,t) = \sin(\pi x / L) \times e^{-\alpha (\pi/L)^2 t}}$ ($T$ is dimensionless, normalized so the initial temperature peak is 1, at t = 0 and x = L/2).
+The exact solution is 𝑻(𝒙,𝒕) = 𝒔𝒊𝒏(𝝅𝒙/𝑳) × 𝒆<sup>−𝜶(𝝅/𝑳)²𝒕</sup> ($T$ is dimensionless, normalized so the initial temperature peak is 1, at t = 0 and x = L/2).
 
 ## Forward problem
 
