@@ -11,7 +11,7 @@ This repository contains a compact implementation of physics-informed neural net
 
 ## Why PINNs?
 
-Most machine learning learns from data alone, but many scientific problems already come with well-established physics — equations, conservation laws — that a purely data-driven model ignores. Physics-Informed Neural Networks fold that physics directly into training, so predictions must obey the governing equations, not just fit the data. This is part of **Scientific Machine Learning (SciML)**, merging machine learning with physical modeling to cut down the data needed and tackle problems — like inferring hidden physical parameters from sparse experiments — that neither approach handles well alone.
+Most machine learning learns only from data. But many industrial and scientific problems already have well-known physical laws that a pure data model ignores. PINNs build those laws directly into training, so they need far less data and never give physically impossible predictions — valuable in industry, where running enough experiments or simulations is expensive. This blend of physics and machine learning is called **Scientific Machine Learning (SciML)**.
 
 ## The problem
 
