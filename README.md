@@ -7,7 +7,7 @@
 
 ---
 
-This repository contains a compact implementation of **Physics-Informed Neural Networks (PINNs)** for the one-dimensional heat equation.
+This repository contains a compact implementation of **Physics-Informed Neural Networks (PINNs)** for the one-dimensional heat problem.
 
 ## Why PINNs?
 
@@ -19,7 +19,7 @@ Over the past few years, **Scientific Machine Learning (SciML)** has grown in po
   <img src="figures/diffusion_alpha.gif" width="70%">
 </p>
 
-**Fig 0:** Heat diffusion along a bar of arbitrary length $L$, for different diffusivities $\alpha$ (m²/s). Larger $\alpha$ means faster diffusion: the bar reaches equilibrium (temperature $T$ equals 0 everywhere) sooner. **[Try the interactive version](docs/interactive/heat_bar_explorer.html)** — adjust $\alpha$ and the initial condition live (clone the repo and open the file in a browser).
+**Fig 0:** Heat diffusion along a bar of arbitrary length $L$, for different thermal diffusivities $\alpha$ (m²/s). Larger $\alpha$ means faster diffusion: the bar reaches equilibrium (temperature $T$ equals 0 everywhere) sooner. **[Try the interactive version](docs/interactive/heat_bar_explorer.html)** — adjust $\alpha$ and the initial condition live (clone the repo and open the file in a browser).
 
 A bar of arbitrary material (metal, ceramic, etc.) **starts hot in the middle, with both ends held at zero temperature**, so heat drains out and the bar cools down over time. **The cooling speed depends on the thermal diffusivity**, which depends on the bar's material properties. This gives two questions:
 
@@ -30,16 +30,13 @@ The one-dimensional **heat problem** studied here is well known, with an exact s
 
 ## Equation and analytical solution
 
+The equation for the 1D heat diffusion problem is:
 $$
 \frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2}, \qquad x \in [0, L],\ t \in [0, t_{\max}]
 $$
-
-$$
-T(x, 0) = \sin(\pi x / L), \qquad T(0, t) = T(L, t) = 0
-$$
-
+The initial conditions are:
 - $T(x, 0) = \sin(\pi x / L)$: the bar's **initial temperature profile**, hot in the middle and zero at the ends;
-- $T(0, t) = 0$ and $T(L, t) = 0$ for every $t$ up to $t_{\max}$: both ends sit in an infinite $T=0$ reservoir, so heat continuously drains out there.
+- $T(0, t) = 0$ and $T(L, t) = 0$ for every $t$ up to $t_{\max}$: **both ends sit in an infinite $T=0$ reservoir**, so heat continuously drains out there.
 
 The exact solution is $T(x,t) = \sin(\pi x / L) \cdot e^{-\alpha (\pi/L)^2 t}$ ($T$ is dimensionless, normalized so the initial peak is 1).
 
