@@ -30,7 +30,7 @@ def diffusion_bar_gif(path, alphas, L=1.0, t_max=1.5, n_x=400, n_frames_per_alph
     im = ax.imshow(T0, aspect="auto", cmap=cmap, vmin=0, vmax=1, extent=[0, L, 0, 1])
     ax.set_yticks([])
     ax.set_xticks([0, L / 2, L], labels=["0", "L/2", "L"])
-    ax.set_xlabel("x")
+    ax.set_xlabel("x (m)")
     fig.colorbar(im, ax=ax, label="T(x, t)  [dimensionless]")
 
     # All three lines share ax.transAxes so they stay centred on the strip, not the whole figure.
@@ -66,7 +66,7 @@ class ProfileRecorder:
         self.profiles.append(T)
 
 
-def training_gif(path, rec, alpha_true, history, curve="loss", obs=None, title="", fps=10, hold=20):
+def training_gif(path, rec, alpha_true, history, curve="loss", obs=None, fps=10, hold=20):
     """Left: PINN profiles (solid) vs exact solution (dashed) [+ observations].
     Right: training curve (loss, or alpha against its true value).
     """
@@ -75,17 +75,16 @@ def training_gif(path, rec, alpha_true, history, curve="loss", obs=None, title="
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.8), gridspec_kw={"width_ratios": [1.25, 1]},
                                    constrained_layout=True)
-    fig.suptitle(title, fontsize=11)
 
     lines = []
     for k, (tk, c) in enumerate(zip(rec.times, colors)):
         ax1.plot(rec.x, T_exact[k], ls="--", lw=1.2, color="0.35")
-        lines.append(ax1.plot(rec.x, rec.profiles[0][k], color=c, lw=2.2, label=f"t = {tk:g}")[0])
+        lines.append(ax1.plot(rec.x, rec.profiles[0][k], color=c, lw=2.2, label=f"t = {tk:g} s")[0])
     if obs is not None:
         ax1.scatter(obs["x"], obs["T_obs"], c=obs["t"], cmap="viridis", vmin=0, vmax=rec.times.max() / 0.9,
                     s=22, edgecolors="black", linewidths=0.5, zorder=5, label="noisy data")
     ax1.plot([], [], ls="--", color="0.35", label="exact")
-    ax1.set(xlabel="x", ylabel="T(x, t)", ylim=(-0.15, 1.15), title="Temperature profiles")
+    ax1.set(xlabel="x (m)", ylabel="T(x, t)", ylim=(-0.15, 1.15), title="Temperature profiles")
     ax1.legend(fontsize=7.5, loc="upper right", ncol=2)
 
     its = np.arange(1, len(history[curve]) + 1)
@@ -103,7 +102,7 @@ def training_gif(path, rec, alpha_true, history, curve="loss", obs=None, title="
     else:
         ax2.set(ylabel="loss", title="Training loss")
         ax2.set_ylim(y.min() / 3, y.max() * 3)
-    ax2.set_xlabel("L-BFGS iteration")
+    ax2.set_xlabel("training iteration")
     label = ax2.text(0.03, 0.05, "", transform=ax2.transAxes, fontsize=9,
                      bbox=dict(boxstyle="round", fc="white", ec="0.8"))
 
@@ -161,7 +160,7 @@ def inverse_comparison_gif(path, rec, runs, alpha_true, obs, title="", fps=10, h
         lp = ax3.plot([], [], color=r["color"], lw=2)[0]
         ld = ax3.plot([], [], color=r["color"], lw=1.5, ls="--")[0]
         traces.append((h, a, lp, ld))
-    ax2.set(xscale="log", xlim=(1, n_it * 1.2), ylim=(-0.03, 1.05), xlabel="L-BFGS iteration", ylabel="alpha",
+    ax2.set(xscale="log", xlim=(1, n_it * 1.2), ylim=(-0.03, 1.05), xlabel="training iteration", ylabel="alpha",
             title="Estimated diffusivity")
     ax2.legend(fontsize=7.5, loc="upper right")
     ax3.plot([], [], color="0.3", lw=2, label="physics loss (PDE residual)")
@@ -169,7 +168,7 @@ def inverse_comparison_gif(path, rec, runs, alpha_true, obs, title="", fps=10, h
     all_l = np.concatenate([np.r_[r["hist"]["loss_phys"], r["hist"]["loss_data"]] for r in runs])
     all_l = all_l[np.isfinite(all_l) & (all_l > 0)]
     ax3.set(xscale="log", yscale="log", xlim=(1, n_it * 1.2), ylim=(all_l.min() / 3, all_l.max() * 3),
-            xlabel="L-BFGS iteration", ylabel="loss", title="Training losses")
+            xlabel="training iteration", ylabel="loss", title="Training losses")
     ax3.legend(fontsize=7.5, loc="lower left")
     label = ax2.text(0.03, 0.05, "", transform=ax2.transAxes, fontsize=9,
                      bbox=dict(boxstyle="round", fc="white", ec="0.8"))

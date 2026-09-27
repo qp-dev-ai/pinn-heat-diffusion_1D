@@ -31,7 +31,7 @@ def field_panels(t, x, T_pred, T_true, obs=None, title_pred="PINN prediction"):
     for ax, (Z, title, cmap) in zip(axes, panels):
         kw = {"vmin": vmin, "vmax": vmax} if cmap == "viridis" else {}
         im = ax.imshow(Z.T, origin="lower", extent=extent, aspect="auto", cmap=cmap, **kw)
-        ax.set(title=title, xlabel="t", ylabel="x")
+        ax.set(title=title, xlabel="t (s)", ylabel="x (m)")
         ax.grid(False)
         fig.colorbar(im, ax=ax, format="%.0e" if cmap == "magma" else None)
     if obs is not None:

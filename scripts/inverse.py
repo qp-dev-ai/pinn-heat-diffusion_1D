@@ -81,11 +81,11 @@ for r in runs:
     ax1.plot(np.arange(1, len(r["hist"]["alpha"]) + 1), r["hist"]["alpha"], color=r["color"], label=r["label"])
     ax2.loglog(r["hist"]["loss_phys"], color=r["color"])
     ax2.loglog(r["hist"]["loss_data"], color=r["color"], ls="--")
-ax1.set(xscale="log", xlabel="L-BFGS iteration", ylabel="alpha", title="Estimated diffusivity")
+ax1.set(xscale="log", xlabel="training iteration", ylabel="alpha", title="Estimated diffusivity")
 ax1.legend(fontsize=8)
 ax2.plot([], [], color="0.3", label="physics loss")
 ax2.plot([], [], color="0.3", ls="--", label="data MSE")
-ax2.set(xlabel="L-BFGS iteration", ylabel="loss", title="Training losses")
+ax2.set(xlabel="training iteration", ylabel="loss", title="Training losses")
 ax2.legend(fontsize=8)
 fig.savefig(out / "inverse_alpha_losses.png")
 

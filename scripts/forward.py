@@ -61,8 +61,7 @@ fig.savefig(out / "forward_field.png")
 
 fig, ax = plt.subplots(figsize=(5, 3.2))
 ax.semilogy(hist["loss"], color=BLUE)
-ax.set(xlabel="L-BFGS iteration", ylabel="physics loss", title="Forward problem - training")
+ax.set(xlabel="training iteration", ylabel="loss (physics)", title="Forward problem - training")
 fig.savefig(out / "forward_loss.png")
-training_gif(out / "forward_training.gif", rec, args.alpha, hist, curve="loss",
-             title=f"Forward problem: PINN solving the heat equation (alpha = {args.alpha}, no data)")
+training_gif(out / "forward_training.gif", rec, args.alpha, hist, curve="loss")
 print(f"Figures saved to {out}")
