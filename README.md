@@ -31,6 +31,7 @@ The one-dimensional **heat problem** studied here is well known, with an exact s
 ## Equation and analytical solution
 
 The equation for the 1D heat diffusion problem is:
+
 $$
 \frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2}, \qquad x \in [0, L],\ t \in [0, t_{\max}]
 $$
