@@ -38,7 +38,7 @@ $$
 
 The initial conditions are:
 
-- $T(x, 0) = \sin(\pi x / L)$: the bar's **initial temperature profile**, hot in the middle and zero at the ends;
+- $T(x, 0) = \sin(\pi x / L)$: **the bar's initial temperature profile, hot in the middle and zero at the ends**;
 - $T(0, t) = 0$ and $T(L, t) = 0$ for every $t$ up to $t_{\max}$: **both ends sit in an infinite $T=0$ reservoir**, so heat continuously drains out there.
 
 The exact solution is **$T(x,t) = \sin(\pi x / L) \cdot e^{-\alpha (\pi/L)^2 t}$** ($T$ is dimensionless, normalized so the initial peak is 1).
