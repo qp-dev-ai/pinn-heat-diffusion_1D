@@ -7,20 +7,15 @@
 
 ---
 
-This repository contains a compact implementation of physics-informed neural networks (PINNs) for the one-dimensional heat equation (JAX, PyTorch or TensorFlow). It solves:
-
-- the **forward problem**: given the thermal diffusivity $\alpha$, reconstruct the temperature field $T(x,t)$ from the physics alone, with no data;
-- the **inverse problem**: estimate the unknown diffusivity $\alpha$ together with $T(x,t)$ from **sparse and noisy temperature measurements**.
+This repository contains a compact implementation of physics-informed neural networks (PINNs) for the one-dimensional heat equation.
 
 ## Why PINNs?
 
-Physics-Informed Neural Networks train a neural network to satisfy a governing differential equation directly, not only to fit data: alongside the usual data loss, the network is penalized whenever its predictions violate the PDE, using automatic differentiation to compute the required derivatives exactly. This makes PINNs a core tool in **Scientific Machine Learning (SciML)**, a growing field that combines data-driven learning with physics-based modeling to improve predictive accuracy, reduce data requirements, and keep models physically consistent.
-
-PINNs are particularly attractive whenever the governing equations are known but measurements are sparse, noisy, or expensive — a common situation in heat transfer, fluid mechanics, solid mechanics, and inverse parameter estimation, where physical parameters (diffusivities, permeabilities, reaction rates, boundary conditions) often cannot be measured directly and must be inferred from limited experimental data.
-
-The one-dimensional heat equation studied here has a well-known analytical solution. That turns it into a **controlled laboratory**: every difficulty that shows up on realistic problems — optimization dynamics, parameter identifiability, sensitivity to noise, collocation point selection — can be checked against ground truth instead of guessed at, which is exactly what lets the methodology be pushed to its limits before tackling problems where no exact solution exists.
+Most machine learning progress comes from learning purely from data, yet many scientific and engineering problems already come with decades of established physical knowledge — governing equations, conservation laws — that a purely data-driven model simply ignores. Physics-Informed Neural Networks fold that physics directly into training, so the network is fit not just to measurements but to the laws that measurements must obey; this is part of a broader movement, **Scientific Machine Learning (SciML)**, merging the flexibility of machine learning with the rigor of physical modeling to accelerate scientific discovery, cut down the data required, and tackle problems — like inferring hidden physical parameters from sparse experiments — that neither approach handles well alone.
 
 ## The problem
+
+The one-dimensional heat equation studied here has a well-known analytical solution, which turns it into a **controlled laboratory**: every difficulty that shows up on realistic problems — optimization dynamics, parameter identifiability, sensitivity to noise — can be checked against ground truth, which is exactly what lets the methodology be pushed to its limits.
 
 $$
 \frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2}, \qquad x \in [0, 1]\ \text{m},\ t \in [0, 1.5]\ \text{s}
