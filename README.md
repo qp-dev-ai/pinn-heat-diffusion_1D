@@ -19,7 +19,7 @@ Over the past few years, **Scientific Machine Learning (SciML)** has grown in po
   <img src="figures/diffusion_alpha.gif" width="70%">
 </p>
 
-**Fig 0:** *Heat diffusing along the bar for different diffusivities $\alpha$* (m²/s). Larger $\alpha$ means faster diffusion: the bar reaches equilibrium ($T=0$ everywhere) sooner. **[Try the interactive version](docs/interactive/heat_bar_explorer.html)** — adjust $\alpha$ and the initial condition live (clone the repo and open the file in a browser).
+**Fig 0:** Heat diffusing along the bar for different diffusivities $\alpha$ (m²/s). Larger $\alpha$ means faster diffusion: the bar reaches equilibrium, temperature $T$ equals 0 everywhere. **[Try the interactive version](docs/interactive/heat_bar_explorer.html)** — adjust $\alpha$ and the initial condition live (clone the repo and open the file in a browser).
 
 The one-dimensional heat equation studied here has a well-known analytical solution, which turns it into a **controlled laboratory**: every difficulty that shows up on realistic problems — optimization dynamics, parameter identifiability, sensitivity to noise — can be checked against ground truth, which is exactly what lets the methodology be pushed to its limits.
 
