@@ -11,7 +11,7 @@ This repository contains a compact implementation of **Physics-Informed Neural N
 
 ## Why PINNs?
 
-Over the past few years, **Scientific Machine Learning (SciML)** has grown in popularity for its ability to speed up scientific research and innovation. Unlike most established machine learning models, which learn only from data, SciML injects scientific knowledge into the learning process. **PINNs** are one SciML methodology: they train on the governing physical equations alongside experimental data, ensuring predictions stay consistent with the physics. With recent advances, SciML could benefit research and industry by bypassing the cost of expensive experiments and simulations.
+Over the past few years, **Scientific Machine Learning (SciML)** has grown in popularity for its ability to speed up scientific research and innovation. Unlike most established machine learning models, which learn only from data, **SciML injects scientific knowledge into the learning process**. **PINNs** are one SciML methodology: they **train on the governing physical equations alongside experimental data**, ensuring predictions stay consistent with the physics. With recent advances, SciML could benefit research and industry by bypassing the cost of expensive experiments and simulations.
 
 ## The problem
 
@@ -27,6 +27,8 @@ In words: a metal bar starts hot in the middle, with both ends held at zero temp
 - the **inverse problem**: given only a few noisy temperature measurements, what is the diffusivity?
 
 The one-dimensional heat equation studied here is well known, with an exact solution, which turns it into a **controlled laboratory** that lets the PINN methodology be pushed to its limits. It is therefore a good benchmark before applying PINNs to more realistic, non-ideal problems.
+
+## Equation and analytical solution
 
 $$
 \frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2}, \qquad x \in [0, 1]\ \text{m},\ t \in [0, 1.5]\ \text{s}
