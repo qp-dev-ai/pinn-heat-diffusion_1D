@@ -51,7 +51,7 @@ Here, $\alpha$ is known and there is no data at all: the goal is simply to check
   <img src="figures/forward_training.gif" width="95%">
 </p>
 
-**Fig 1:** *Forward problem.* With \(\alpha=0.18\) known, the PINN approximates the solution of the 1D heat equation using the governing equation and the initial and boundary conditions, without temperature measurements. The predicted temperature profiles are compared with the analytical solution at several times (dashed lines). The right panel shows the evolution training loss.
+**Fig 1:** *Forward problem with no data.* With \(\alpha=0.18\) known, the PINN approximates the solution of the 1D heat equation using the governing equation and the initial and boundary conditions, without any temperature measurements. The predicted temperature profiles are compared with the analytical solution at several times (dashed lines). The right panel shows the evolution training loss.
 
 **Limitations.** Solving the forward problem here has little practical interest on its own: the exact solution is already known analytically, so a PINN reconstructing it brings nothing new. PINNs become genuinely useful for equations with no known exact solution — but even there, classical numerical solvers (finite difference, finite element) already solve most such PDEs very quickly. For now, PINNs offer no major advantage for a plain forward problem like this one; any future edge will likely come from making the training itself more efficient.
 
