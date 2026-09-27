@@ -21,7 +21,7 @@ Over the past few years, **Scientific Machine Learning (SciML)** has grown in po
 
 **Fig 0:** Heat diffusion along a bar of arbitrary length $L$, for different diffusivities $\alpha$ (m²/s). Larger $\alpha$ means faster diffusion: the bar reaches equilibrium (temperature $T$ equals 0 everywhere) sooner. **[Try the interactive version](docs/interactive/heat_bar_explorer.html)** — adjust $\alpha$ and the initial condition live (clone the repo and open the file in a browser).
 
-The one-dimensional heat equation studied here has a well-known analytical solution, which turns it into a **controlled laboratory**: every difficulty that shows up on realistic problems — optimization dynamics, parameter identifiability, sensitivity to noise — can be checked against ground truth, which is exactly what lets the methodology be pushed to its limits.
+The one-dimensional heat equation studied here is well known, with an exact solution, which turns it into a **controlled laboratory** that lets the PINN methodology be pushed to its limits. It is therefore a good benchmark before applying PINNs to more realistic, non-ideal problems.
 
 $$
 \frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2}, \qquad x \in [0, 1]\ \text{m},\ t \in [0, 1.5]\ \text{s}
