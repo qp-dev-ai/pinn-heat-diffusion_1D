@@ -1,0 +1,372 @@
+<title>Heat Bar Explorer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#151110; --panel:#1e1917; --panel-2:#241e1b; --edge:#3a2f2a;
+  --text:#f3ece6; --muted:#a89a90; --orange:#e8743b; --blue:#5a9bf0;
+  --track:#332a26;
+  color-scheme: dark;
+}
+:root:not([data-theme="light"]){
+  --bg:#151110; --panel:#1e1917; --panel-2:#241e1b; --edge:#3a2f2a;
+  --text:#f3ece6; --muted:#a89a90; --orange:#e8743b; --blue:#5a9bf0;
+  --track:#332a26;
+  color-scheme: dark;
+}
+:root[data-theme="light"]{
+  --bg:#151110; --panel:#1e1917; --panel-2:#241e1b; --edge:#3a2f2a;
+  --text:#f3ece6; --muted:#a89a90; --orange:#e8743b; --blue:#5a9bf0;
+  --track:#332a26;
+  color-scheme: dark;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:"Manrope", system-ui, sans-serif;
+  padding-inline:16px; padding-block:32px;
+  display:flex; justify-content:center;
+}
+.wrap{ width:100%; max-width:640px; }
+.eyebrow{
+  font-family:"IBM Plex Mono", monospace; font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--orange); margin:0 0 6px;
+}
+h1{ font-size:26px; font-weight:800; margin:0 0 10px; letter-spacing:-.01em; }
+.lede{ color:var(--muted); font-size:14px; line-height:1.55; margin:0 0 22px; max-width:56ch; }
+.formula{
+  font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--text);
+  background:var(--panel-2); border:1px solid var(--edge); border-radius:8px;
+  padding:10px 14px; margin:0 0 24px; overflow-x:auto; white-space:nowrap;
+}
+.formula b{ color:var(--orange); font-weight:600; }
+.card{
+  background:var(--panel); border:1px solid var(--edge); border-radius:16px;
+  padding:20px; display:flex; flex-direction:column; gap:18px;
+}
+.stage{ position:relative; }
+canvas{
+  width:100%; display:block; border-radius:10px; background:#000;
+  border:1px solid var(--edge);
+}
+.readout{
+  position:absolute; top:10px; left:50%; transform:translateX(-50%);
+  font-family:"IBM Plex Mono", monospace; font-size:12px;
+  background:rgba(20,15,13,.72); border:1px solid var(--edge);
+  padding:5px 12px; border-radius:999px; backdrop-filter:blur(2px);
+  display:flex; gap:14px; white-space:nowrap;
+}
+.readout span b{ color:var(--orange); font-weight:600; }
+.readout .alpha-badge{
+  border:1.5px solid var(--orange); border-radius:6px; padding:2px 8px;
+}
+.legend{
+  display:flex; align-items:center; gap:8px; font-family:"IBM Plex Mono", monospace;
+  font-size:11px; color:var(--muted);
+}
+.legend .bar{
+  flex:1; height:8px; border-radius:4px;
+  background:linear-gradient(90deg,#000000,#3b0f0a,#8f1d0e,#d4530f,#f3941f,#ffe066,#ffffff);
+  border:1px solid var(--edge);
+}
+.controls{ display:flex; flex-direction:column; gap:16px; }
+.row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.field{ display:flex; flex-direction:column; gap:6px; flex:1; min-width:200px; }
+label{
+  font-family:"IBM Plex Mono", monospace; font-size:11px; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted);
+}
+select, input[type=range]{ accent-color:var(--orange); }
+select{
+  background:var(--panel-2); color:var(--text); border:1px solid var(--edge);
+  border-radius:8px; padding:9px 10px; font-family:"IBM Plex Mono", monospace; font-size:13px;
+}
+input[type=range]{ width:100%; height:4px; background:var(--track); border-radius:2px; }
+.playbar{ display:flex; align-items:center; gap:12px; }
+button{
+  font-family:"Manrope", sans-serif; font-weight:600; font-size:13px;
+  background:var(--orange); color:#1a1210; border:none; border-radius:8px;
+  padding:10px 18px; cursor:pointer;
+}
+button:active{ transform:translateY(1px); }
+button.ghost{
+  background:transparent; color:var(--text); border:1px solid var(--edge);
+}
+.note{
+  font-size:12px; color:var(--muted); line-height:1.5; margin:0;
+}
+.note b{ color:var(--text); }
+@media (max-width:420px){
+  h1{ font-size:22px; }
+}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">1D Heat Equation &mdash; Interactive</p>
+  <h1>Heat Bar Explorer</h1>
+  <p class="lede">
+    A metal bar, ends held at T&nbsp;=&nbsp;0 (a perfect heat sink). Pick a starting temperature
+    profile and a thermal diffusivity &alpha;, and watch how fast the bar cools back to zero.
+  </p>
+  <div class="formula">
+    &part;T&frasl;&part;t <b>=</b> &alpha; &part;&sup2;T&frasl;&part;x&sup2;
+    &nbsp;&nbsp;|&nbsp;&nbsp; T(0,t) = T(L,t) = 0
+    &nbsp;&nbsp;|&nbsp;&nbsp; T(x,0) = <span id="icFormula">sin(&pi;x&frasl;L)</span>
+  </div>
+  <p class="note" style="margin:-14px 0 24px;">
+    Units: x in <b>m</b> (bar length L&nbsp;=&nbsp;1&nbsp;m), &alpha; in <b>m&sup2;&frasl;s</b>, t in <b>s</b>.
+    T is dimensionless (normalised so the initial peak is 1).
+  </p>
+
+  <div class="card">
+    <div class="stage">
+      <canvas id="bar" width="1000" height="160"></canvas>
+      <div class="readout">
+        <span class="alpha-badge">&alpha; = <b id="alphaReadout">0.18</b> m&sup2;&frasl;s</span>
+        <span>t = <b id="tReadout">0.00</b> s</span>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span>T = 0</span>
+      <div class="bar"></div>
+      <span>T = 1</span>
+    </div>
+
+    <div class="controls">
+      <div class="row">
+        <div class="field">
+          <label for="alphaPreset">Preset diffusivity</label>
+          <select id="alphaPreset">
+            <option value="0.05">&alpha; = 0.05 &mdash; slow (insulator-like)</option>
+            <option value="0.18" selected>&alpha; = 0.18</option>
+            <option value="0.5">&alpha; = 0.5</option>
+            <option value="1.0">&alpha; = 1.0</option>
+            <option value="2.5">&alpha; = 2.5 &mdash; fast (copper-like)</option>
+            <option value="custom">Custom&hellip;</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="alphaSlider">&alpha; (0.01 &ndash; 3.00)</label>
+          <input type="range" id="alphaSlider" min="0.01" max="3" step="0.01" value="0.18">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field" style="min-width:100%;">
+          <label for="icPreset">Initial condition T(x, 0)</label>
+          <select id="icPreset">
+            <option value="sin1" selected>sin(&pi;x&frasl;L) &mdash; fundamental mode</option>
+            <option value="sin2">sin(2&pi;x&frasl;L) &mdash; second harmonic</option>
+            <option value="bump_center">Bump at the centre</option>
+            <option value="bump_offcenter">Bump off-centre (x &asymp; 0.3L)</option>
+            <option value="two_bumps">Two bumps</option>
+            <option value="step">Square pulse (Gibbs phenomenon)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row playbar">
+        <button id="playBtn">Pause</button>
+        <button id="resetBtn" class="ghost">Restart</button>
+        <div class="field" style="min-width:140px;">
+          <label for="speed">Speed</label>
+          <input type="range" id="speed" min="0.25" max="2.5" step="0.25" value="1">
+        </div>
+      </div>
+    </div>
+
+    <p class="note">
+      Both ends sit in an infinite <b>T&nbsp;=&nbsp;0 reservoir</b>: heat continuously drains out
+      at x&nbsp;=&nbsp;0 and x&nbsp;=&nbsp;L, which is why the bar always cools toward zero.
+      Larger &alpha; means the same drop happens faster. Any initial shape is decomposed into sine
+      modes (Fourier series); each mode n decays as e<sup>&minus;&alpha;(n&pi;&frasl;L)&sup2;t</sup>,
+      so sharper shapes (like the square pulse) smooth out fastest.
+    </p>
+  </div>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('bar');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const N = 400; // spatial resolution
+  const N_MODES = 60; // sine modes used to decompose T(x,0)
+  const L = 1.0, T_MAX = 1.5;
+
+  const alphaPreset = document.getElementById('alphaPreset');
+  const alphaSlider = document.getElementById('alphaSlider');
+  const alphaReadout = document.getElementById('alphaReadout');
+  const tReadout = document.getElementById('tReadout');
+  const icPreset = document.getElementById('icPreset');
+  const icFormula = document.getElementById('icFormula');
+  const playBtn = document.getElementById('playBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const speedSlider = document.getElementById('speed');
+
+  const xs = new Float64Array(N);
+  for (let i = 0; i < N; i++) xs[i] = (i / (N - 1)) * L;
+
+  // sinTable[n-1][i] = sin(n*pi*x_i/L), n = 1..N_MODES
+  const sinTable = [];
+  for (let n = 1; n <= N_MODES; n++){
+    const row = new Float64Array(N);
+    for (let i = 0; i < N; i++) row[i] = Math.sin(n * Math.PI * xs[i] / L);
+    sinTable.push(row);
+  }
+
+  const IC_PROFILES = {
+    sin1: { formula: 'sin(&pi;x&frasl;L)', fn: x => Math.sin(Math.PI * x / L) },
+    sin2: { formula: 'sin(2&pi;x&frasl;L)', fn: x => Math.sin(2 * Math.PI * x / L) },
+    bump_center: {
+      formula: 'tent peaking at x = L&frasl;2',
+      fn: x => Math.max(0, 1 - Math.abs(x / L - 0.5) * 4),
+    },
+    bump_offcenter: {
+      formula: 'gaussian bump at x &asymp; 0.3L',
+      fn: x => Math.exp(-((x / L - 0.3) ** 2) / (2 * 0.05 ** 2)),
+    },
+    two_bumps: {
+      formula: 'two gaussian bumps',
+      fn: x => Math.exp(-((x / L - 0.25) ** 2) / (2 * 0.04 ** 2)) +
+               Math.exp(-((x / L - 0.7) ** 2) / (2 * 0.04 ** 2)),
+    },
+    step: {
+      formula: 'rectangular pulse on [0.4L, 0.6L]',
+      fn: x => (x / L >= 0.4 && x / L <= 0.6) ? 1 : 0,
+    },
+  };
+
+  // Fourier sine-series coefficients a_n = (2/L) * integral( T0(x) sin(n pi x/L) dx ), trapezoidal rule.
+  function fourierCoeffs(fn){
+    const T0 = new Float64Array(N);
+    for (let i = 0; i < N; i++) T0[i] = fn(xs[i]);
+    const dx = L / (N - 1);
+    const coeffs = new Float64Array(N_MODES);
+    for (let n = 0; n < N_MODES; n++){
+      let sum = 0;
+      const row = sinTable[n];
+      for (let i = 0; i < N; i++){
+        const w = (i === 0 || i === N - 1) ? 0.5 : 1; // trapezoidal weights
+        sum += w * T0[i] * row[i] * dx;
+      }
+      coeffs[n] = (2 / L) * sum;
+    }
+    return coeffs;
+  }
+
+  let alpha = 0.18;
+  let coeffs = fourierCoeffs(IC_PROFILES.sin1.fn);
+  let t = 0;
+  let playing = true;
+  let lastFrame = null;
+
+  // Blackbody-ish colormap: black -> deep red -> orange -> yellow -> white
+  const stops = [
+    [0.00, [0, 0, 0]],
+    [0.18, [59, 15, 10]],
+    [0.40, [143, 29, 14]],
+    [0.60, [212, 83, 15]],
+    [0.78, [243, 148, 31]],
+    [0.92, [255, 224, 102]],
+    [1.00, [255, 255, 255]],
+  ];
+  function colormap(v){
+    v = Math.min(1, Math.max(0, v));
+    for (let i = 0; i < stops.length - 1; i++){
+      const [p0, c0] = stops[i], [p1, c1] = stops[i+1];
+      if (v >= p0 && v <= p1){
+        const f = (v - p0) / (p1 - p0);
+        return [
+          Math.round(c0[0] + f * (c1[0] - c0[0])),
+          Math.round(c0[1] + f * (c1[1] - c0[1])),
+          Math.round(c0[2] + f * (c1[2] - c0[2])),
+        ];
+      }
+    }
+    return stops[stops.length - 1][1];
+  }
+
+  const imgData = ctx.createImageData(N, 1);
+
+  function temperatureField(){
+    const T = new Float64Array(N);
+    for (let n = 0; n < N_MODES; n++){
+      const k2 = ((n + 1) * Math.PI / L) ** 2;
+      const decay = coeffs[n] * Math.exp(-alpha * k2 * t);
+      if (decay === 0) continue;
+      const row = sinTable[n];
+      for (let i = 0; i < N; i++) T[i] += decay * row[i];
+    }
+    return T;
+  }
+
+  function draw(){
+    const T = temperatureField();
+    for (let i = 0; i < N; i++){
+      const [r, g, b] = colormap(T[i]);
+      const o = i * 4;
+      imgData.data[o] = r; imgData.data[o+1] = g; imgData.data[o+2] = b; imgData.data[o+3] = 255;
+    }
+    ctx.imageSmoothingEnabled = true;
+    // draw the 1-row strip scaled to fill the canvas via an offscreen buffer
+    const off = document.createElement('canvas');
+    off.width = N; off.height = 1;
+    off.getContext('2d').putImageData(imgData, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(off, 0, 0, N, 1, 0, 0, W, H);
+
+    alphaReadout.textContent = alpha.toFixed(2);
+    tReadout.textContent = t.toFixed(2);
+  }
+
+  function setAlpha(v){
+    alpha = v;
+    alphaSlider.value = v;
+    alphaReadout.textContent = alpha.toFixed(2);
+    draw();
+  }
+
+  alphaPreset.addEventListener('change', () => {
+    if (alphaPreset.value === 'custom') return;
+    setAlpha(parseFloat(alphaPreset.value));
+  });
+  alphaSlider.addEventListener('input', () => {
+    alphaPreset.value = 'custom';
+    setAlpha(parseFloat(alphaSlider.value));
+  });
+
+  icPreset.addEventListener('change', () => {
+    const profile = IC_PROFILES[icPreset.value];
+    coeffs = fourierCoeffs(profile.fn);
+    icFormula.innerHTML = profile.formula;
+    t = 0;
+    draw();
+  });
+
+  playBtn.addEventListener('click', () => {
+    playing = !playing;
+    playBtn.textContent = playing ? 'Pause' : 'Play';
+    if (playing) { lastFrame = null; requestAnimationFrame(tick); }
+  });
+  resetBtn.addEventListener('click', () => {
+    t = 0;
+    draw();
+  });
+
+  function tick(ts){
+    if (!playing) return;
+    if (lastFrame === null) lastFrame = ts;
+    const dt = (ts - lastFrame) / 1000;
+    lastFrame = ts;
+    const speed = parseFloat(speedSlider.value);
+    t += dt * speed * 0.5;
+    if (t > T_MAX) t = 0;
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  draw();
+  requestAnimationFrame(tick);
+})();
+</script>

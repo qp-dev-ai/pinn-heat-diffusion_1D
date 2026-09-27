@@ -12,6 +12,42 @@ from .plotting import BLUE, ORANGE, plt
 PROFILE_TIMES = np.array([0.0, 0.15, 0.4, 0.8, 1.5])
 
 
+def diffusion_bar_gif(path, alphas, L=1.0, t_max=1.5, n_x=400, n_frames_per_alpha=60, hold=15, fps=25,
+                       cmap="inferno"):
+    """Heat diffusing along a single bar, exact solution, cycling through each alpha in turn.
+
+    One strip is rendered as a 1D heatmap (colour = temperature); it replays the diffusion
+    from t=0 for each alpha in `alphas`, one after another, with no PINN involved.
+    """
+    x = np.linspace(0, L, n_x)
+    times = np.linspace(0, t_max, n_frames_per_alpha)
+    frames = [(alpha, t) for alpha in alphas for t in times] + \
+             [(alphas[-1], times[-1])] * hold
+
+    fig, ax = plt.subplots(figsize=(7.5, 2.2), constrained_layout=True)
+    fig.suptitle("Heat diffusion along a 1D bar", fontsize=11)
+
+    T0 = exact_solution(x, 0.0, alphas[0], L)[None, :]
+    im = ax.imshow(T0, aspect="auto", cmap=cmap, vmin=0, vmax=1, extent=[0, L, 0, 1])
+    ax.set_yticks([])
+    ax.set_xlabel("x (m)")
+    fig.colorbar(im, ax=ax, label="T(x, t)  [dimensionless]")
+
+    label_alpha = ax.text(0.5, 1.42, "", transform=ax.transAxes, ha="center", fontsize=13,
+                          color=ORANGE, bbox=dict(boxstyle="round", fc="white", ec=ORANGE, lw=1.5))
+    label_t = ax.text(0.5, 1.14, "", transform=ax.transAxes, ha="center", fontsize=10, color="0.3")
+
+    def draw(f):
+        alpha, t = frames[f]
+        im.set_data(exact_solution(x, t, alpha, L)[None, :])
+        label_alpha.set_text(f"$\\bf{{\\alpha = {alpha:g}}}$ m²/s")
+        label_t.set_text(f"t = {t:.2f} s")
+        return [im, label_alpha, label_t]
+
+    FuncAnimation(fig, draw, frames=len(frames), blit=False).save(path, writer=PillowWriter(fps=fps))
+    plt.close(fig)
+
+
 class ProfileRecorder:
     """Callback for `train_lbfgs` storing T(x, t_k) at a few fixed times."""
 

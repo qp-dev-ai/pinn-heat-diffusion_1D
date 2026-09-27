@@ -14,6 +14,26 @@ This repository contains a compact **JAX** implementation of physics-informed ne
 
 The 1D heat equation has an analytical solution. That makes it a controlled setting for studying how PINNs behave: optimization, parameter identifiability, and robustness to noise and to the amount of data. The problems met here are the same ones met on realistic problems.
 
+## The problem
+
+PINNs train a network to satisfy a governing PDE directly, not just to fit data — useful whenever physical knowledge is available but measurements are sparse and noisy. The 1D heat equation is one of the few PDEs with a closed-form solution, which makes it a controlled benchmark: every aspect of training (optimization, parameter identifiability, robustness to noise) can be checked against ground truth instead of guessed at.
+
+$$
+\frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2}, \qquad x \in [0, 1]\ \text{m},\ t \in [0, 1.5]\ \text{s}
+$$
+
+$$
+T(x, 0) = \sin(\pi x), \qquad T(0, t) = T(1, t) = 0
+$$
+
+Both ends of the bar sit in an infinite $T=0$ reservoir, so heat continuously drains out at $x=0$ and $x=L$. The exact solution is $T(x,t) = \sin(\pi x)\, e^{-\alpha \pi^2 t}$ ($T$ is dimensionless, normalized so the initial peak is 1); it is used only to generate synthetic measurements and to evaluate the PINN.
+
+<p align="center">
+  <img src="figures/diffusion_alpha.gif" width="70%">
+</p>
+
+**Fig 0:** *Heat diffusing along the bar for different diffusivities $\alpha$* (m²/s). Larger $\alpha$ means faster diffusion: the bar reaches equilibrium ($T=0$ everywhere) sooner. **[Try the interactive version](docs/interactive/heat_bar_explorer.html)** — adjust $\alpha$ and the initial condition live (clone the repo and open the file in a browser).
+
 ## Forward problem
 
 <p align="center">
@@ -35,18 +55,6 @@ The 1D heat equation has an analytical solution. That makes it a controlled sett
 - 🔵 **$\alpha = \alpha_{\min} + \beta^2$, sensitivity-weighted.** Measurements are reweighted by their sensitivity to $\alpha$ (see below), giving $\hat\alpha = 0.469$ (6.2% error).
 
 Left panel: profiles of the sensitivity-weighted run (solid) against the exact solution (dashed), with the measurements coloured by time. Right panel: physics loss (solid) and data MSE (dashed). This dataset is one where the weighting helps markedly; the statistics over many datasets are given below.
-
-## The problem
-
-$$
-\frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2}, \qquad x \in [0, 1],\ t \in [0, 1.5]
-$$
-
-$$
-T(x, 0) = \sin(\pi x), \qquad T(0, t) = T(1, t) = 0
-$$
-
-The exact solution is $T(x,t) = \sin(\pi x)\, e^{-\alpha \pi^2 t}$. It is used only to generate synthetic measurements and to evaluate the results.
 
 ## Method
 
@@ -121,6 +129,7 @@ pip install -r requirements.txt
 ## Getting started
 
 ```bash
+python scripts/diffusion.py                # Fig 0: diffusion animation    -> figures/diffusion_alpha.gif
 python scripts/forward.py                  # Fig 1: forward problem        -> figures/forward_*
 python scripts/inverse.py                  # Fig 2: inverse problem, 3 variants -> figures/inverse_*
 python scripts/inverse.py --alpha_true 0.18 --noise 0.1 --n_obs 50
@@ -149,11 +158,11 @@ pinn_heat/
   pinn.py       PDE residual (autodiff), losses, L-BFGS training loop
   inverse.py    inverse fit and sensitivity weights
   plotting.py   figure style
-  animate.py    training animations
-scripts/        forward.py, inverse.py, robustness_study.py, data_size_study.py
+  animate.py    training animations, diffusion-bar animation
+scripts/        diffusion.py, forward.py, inverse.py, robustness_study.py, data_size_study.py
 figures/        generated figures and animations
 results/        study results (CSV)
-docs/           technical note and implementation details (PDF + LaTeX source)
+docs/           technical note, implementation details (PDF + LaTeX source), interactive diffusion explorer
 ```
 
 ## Roadmap
