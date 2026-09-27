@@ -21,6 +21,8 @@ Over the past few years, **Scientific Machine Learning (SciML)** has grown in po
 
 **Fig 0:** Heat diffusion along a bar of arbitrary length $L$, for different diffusivities $\alpha$ (m²/s). Larger $\alpha$ means faster diffusion: the bar reaches equilibrium (temperature $T$ equals 0 everywhere) sooner. **[Try the interactive version](docs/interactive/heat_bar_explorer.html)** — adjust $\alpha$ and the initial condition live (clone the repo and open the file in a browser).
 
+In words: a metal bar has both ends held at zero temperature, like being plunged into an infinite heat sink, while its middle starts out hot. Heat then diffuses toward the cold ends and drains out, so the bar cools down over time. How fast this happens is set by the thermal diffusivity, a material property: the higher it is, the faster the bar cools. The forward problem asks, given that diffusivity, what the temperature looks like everywhere at any time; the inverse problem asks the reverse — given only a handful of noisy temperature measurements, what the diffusivity must have been.
+
 The one-dimensional heat equation studied here is well known, with an exact solution, which turns it into a **controlled laboratory** that lets the PINN methodology be pushed to its limits. It is therefore a good benchmark before applying PINNs to more realistic, non-ideal problems.
 
 $$
