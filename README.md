@@ -23,22 +23,25 @@ Over the past few years, **Scientific Machine Learning (SciML)** has grown in po
 
 In words: a metal bar starts hot in the middle, with both ends held at zero temperature, so heat drains out and the bar cools down over time. The cooling speed depends on the thermal diffusivity, which depends on the bar's material properties. This gives two questions:
 
-- the **forward problem**: given the diffusivity, what does the temperature look like everywhere, at every time?
-- the **inverse problem**: given only a few noisy temperature measurements, what is the diffusivity?
+- the **forward problem**: given the thermal diffusivity, what does the temperature look like everywhere, at every time?
+- the **inverse problem**: given only a few noisy temperature measurements, what is the thermal diffusivity?
 
 The one-dimensional heat equation studied here is well known, with an exact solution, which turns it into a **controlled laboratory** that lets the PINN methodology be pushed to its limits. It is therefore a good benchmark before applying PINNs to more realistic, non-ideal problems.
 
 ## Equation and analytical solution
 
 $$
-\frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2}, \qquad x \in [0, 1]\ \text{m},\ t \in [0, 1.5]\ \text{s}
+\frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2}, \qquad x \in [0, L],\ t \in [0, t_{\max}]
 $$
 
 $$
-T(x, 0) = \sin(\pi x), \qquad T(0, t) = T(1, t) = 0
+T(x, 0) = \sin(\pi x / L), \qquad T(0, t) = T(L, t) = 0
 $$
 
-Both ends of the bar sit in an infinite $T=0$ reservoir, so heat continuously drains out at $x=0$ and $x=L$. The exact solution is $T(x,t) = \sin(\pi x)\, e^{-\alpha \pi^2 t}$ ($T$ is dimensionless, normalized so the initial peak is 1); it is used only to generate synthetic measurements and to evaluate the PINN.
+- $T(x, 0) = \sin(\pi x / L)$: the bar's **initial temperature profile**, hot in the middle and zero at the ends;
+- $T(0, t) = 0$ and $T(L, t) = 0$ for every $t$ up to $t_{\max}$: both ends sit in an infinite $T=0$ reservoir, so heat continuously drains out there.
+
+The exact solution is $T(x,t) = \sin(\pi x / L) \cdot e^{-\alpha (\pi/L)^2 t}$ ($T$ is dimensionless, normalized so the initial peak is 1); it is used only to generate synthetic measurements and to evaluate the PINN.
 
 ## Forward problem
 
@@ -54,7 +57,7 @@ Both ends of the bar sit in an infinite $T=0$ reservoir, so heat continuously dr
   <img src="figures/inverse_training.gif" width="100%">
 </p>
 
-**Fig 2:** *Inverse problem.* Starting from a wrong guess ($\alpha_0 = 1.0$), the PINN learns both the temperature field and the diffusivity from 18 noisy measurements (20% noise, true $\alpha = 0.5$). The same dataset is used for three training variants:
+**Fig 2:** *Inverse problem.* Starting from a wrong guess ($\alpha_0 = 1.0$), the PINN learns both the temperature field and the thermal diffusivity from 18 noisy measurements (20% noise, true $\alpha = 0.5$). The same dataset is used for three training variants:
 
 - 🟠 **$\alpha = \text{softplus}(\beta)$.** The first L-BFGS step sends $\beta$ to a large negative value. Softplus then saturates ($\alpha \approx 10^{-31}$, $d\alpha/d\beta \approx 0$), so $\alpha$ can never recover. The network is stuck on the **trivial solution $\alpha \to 0$**, and both losses plateau near $10^{-1}$.
 - ⚪ **$\alpha = \alpha_{\min} + \beta^2$, unweighted.** The gradient $d\alpha/d\beta = 2\beta$ only shrinks linearly as $\alpha \to 0$. $\alpha$ therefore dips to about 0.06, recovers once the network has fitted the data, and reaches $\hat\alpha = 0.450$ (10.0% error).
