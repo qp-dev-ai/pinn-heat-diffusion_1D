@@ -7,7 +7,7 @@
 
 ---
 
-This repository contains a compact implementation of **physics-informed neural networks (PINNs)** for the one-dimensional heat equation.
+This repository contains a compact implementation of **Physics-Informed Neural Networks (PINNs)** for the one-dimensional heat equation.
 
 ## Why PINNs?
 
