@@ -144,6 +144,71 @@ def training_gif(path, rec, alpha_true, history, curve="loss", obs=None, fps=10,
     plt.close(fig)
 
 
+def inverse_single_gif(path, rec, alpha_true, history, obs, fps=10, hold=20):
+    """Inverse problem, one run: profiles | alpha convergence | loss breakdown, side by side."""
+    colors = cm.viridis(np.linspace(0, 0.9, len(rec.times)))
+    T_exact = exact_solution(rec.x[None, :], rec.times[:, None], alpha_true, rec.L)
+
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 3.8), gridspec_kw={"width_ratios": [1.15, 1, 1]},
+                                        constrained_layout=True)
+
+    lines = []
+    for k, (tk, c) in enumerate(zip(rec.times, colors)):
+        ax1.plot(rec.x, T_exact[k], ls="--", lw=1.2, color="0.35")
+        lines.append(ax1.plot(rec.x, rec.profiles[0][k], color=c, lw=2.2, label=f"t = {tk:g} s")[0])
+    # Colour each point like its closest profile line (by time), not by raw t value.
+    idx = np.argmin(np.abs(obs["t"][:, None] - rec.times[None, :]), axis=1)
+    ax1.scatter(obs["x"], obs["T_obs"], c=colors[idx], s=18, edgecolors="black", linewidths=0.4, zorder=5,
+               label="noisy data")
+    ax1.plot([], [], ls="--", color="0.35", label="exact")
+    ax1.set(xlabel="x (m)", ylabel="T(x, t)", ylim=(-0.15, 1.5), title="Temperature profiles")
+    ax1.legend(fontsize=6.5, loc="upper right", ncol=2)
+
+    its = np.arange(1, len(history["loss"]) + 1)
+    y_alpha = history["alpha"]
+    (trace_a,) = ax2.plot([], [], color=BLUE, lw=2)
+    (dot_a,) = ax2.plot([], [], "o", color=BLUE)
+    ax2.axhline(alpha_true, color=ORANGE, ls="--", lw=1.5, label=f"true alpha = {alpha_true}")
+    ax2.set(xscale="log", xlim=(1, its[-1] * 1.2), ylabel="alpha", title="Estimated diffusivity")
+    ax2.set_ylim(min(y_alpha.min(), alpha_true) / 1.5, max(y_alpha.max(), alpha_true) * 1.5)
+    ax2.set_xlabel("training iteration")
+    ax2.legend(fontsize=8)
+
+    (trace_t,) = ax3.plot([], [], color=BLUE, lw=2, label="total loss")
+    (dot_t,) = ax3.plot([], [], "o", color=BLUE)
+    (trace_p,) = ax3.plot([], [], color=GREY, lw=1.5, ls="--", label="physics loss")
+    (dot_p,) = ax3.plot([], [], "o", color=GREY, ms=4)
+    (trace_d,) = ax3.plot([], [], color=ORANGE, lw=1.5, ls=":", label="data loss")
+    (dot_d,) = ax3.plot([], [], "o", color=ORANGE, ms=4)
+    all_y = np.concatenate([history["loss"], history["loss_phys"], history["loss_data"]])
+    all_y = all_y[np.isfinite(all_y) & (all_y > 0)]
+    ax3.set_xscale("log")
+    ax3.set_yscale("log")
+    ax3.set_xlim(1, its[-1] * 1.2)
+    ax3.set_ylim(all_y.min() / 3, all_y.max() * 8)
+    ax3.set(xlabel="training iteration", ylabel="loss", title="Training loss")
+    ax3.legend(fontsize=7, loc="upper right")
+
+    frames = list(range(len(rec.iters))) + [len(rec.iters) - 1] * hold
+
+    def draw(f):
+        it = rec.iters[f]
+        for k, ln in enumerate(lines):
+            ln.set_ydata(rec.profiles[f][k])
+        trace_a.set_data(its[: it + 1], y_alpha[: it + 1])
+        dot_a.set_data([its[it]], [y_alpha[it]])
+        trace_t.set_data(its[: it + 1], history["loss"][: it + 1])
+        dot_t.set_data([its[it]], [history["loss"][it]])
+        trace_p.set_data(its[: it + 1], history["loss_phys"][: it + 1])
+        dot_p.set_data([its[it]], [history["loss_phys"][it]])
+        trace_d.set_data(its[: it + 1], history["loss_data"][: it + 1])
+        dot_d.set_data([its[it]], [history["loss_data"][it]])
+        return lines + [trace_a, dot_a, trace_t, dot_t, trace_p, dot_p, trace_d, dot_d]
+
+    FuncAnimation(fig, draw, frames=frames, blit=False).save(path, writer=PillowWriter(fps=fps))
+    plt.close(fig)
+
+
 def inverse_comparison_gif(path, rec, runs, alpha_true, obs, title="", fps=10, hold=20):
     """Inverse problem, several training variants side by side.
 

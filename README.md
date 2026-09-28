@@ -43,16 +43,10 @@ In the forward problem, the thermal diffusivity $\alpha$, the initial condition,
 In the inverse problem, only the initial and boundary conditions are known: the thermal diffusivity $\alpha$ and the temperature field $T(x,t)$ are both estimated together from sparse, noisy temperature measurements (see [Details](#details-equation-method-parameter-identifiability-robustness-study) for how the choice of $\alpha$ parameterization can make or break this).
 
 <p align="center">
-  <img src="figures/inverse_simple_alpha.gif" width="95%">
+  <img src="figures/inverse_simple_training.gif" width="100%">
 </p>
 
-**Fig 2:** *Inverse problem.* Starting from a wrong guess ($\alpha_0 = 0.3$), the PINN recovers both the temperature field and the thermal diffusivity from 18 noisy measurements (10% noise, true $\alpha = 0.5$). Left panel: predicted profiles (solid) against the exact solution (dashed), with the measurements coloured by time. Right panel: the estimated $\alpha$ converging toward the true value (dashed).
-
-<p align="center">
-  <img src="figures/inverse_simple_loss.gif" width="95%">
-</p>
-
-**Fig 2b:** Same run; the right panel now shows the total, physics-only, and data-only components of the loss instead of $\alpha$.
+**Fig 2:** *Inverse problem.* Starting from a wrong guess ($\alpha_0 = 0.1$), the PINN recovers both the temperature field and the thermal diffusivity from 100 noisy measurements (10% noise, true $\alpha = 0.3$). Left: predicted profiles (solid) against the exact solution (dashed), with the measurements coloured to match their closest profile time. Middle: the estimated $\alpha$ converging toward the true value (dashed). Right: the total, physics-only, and data-only components of the loss.
 
 <details>
 <summary>
@@ -175,7 +169,7 @@ pip install -r requirements.txt
 ```bash
 python scripts/diffusion.py                # Fig 0: diffusion animation    -> figures/diffusion_alpha.gif
 python scripts/forward.py                  # Fig 1: forward problem        -> figures/forward_*
-python scripts/inverse_simple.py           # Fig 2: inverse problem, single run -> figures/inverse_simple_*
+python scripts/inverse_simple.py           # Fig 2: inverse problem, single run -> figures/inverse_simple_training.gif
 python scripts/inverse.py                  # Fig 2c: comparing alpha parameterizations -> figures/inverse_*
 python scripts/inverse.py --alpha_true 0.18 --noise 0.1 --n_obs 50
 python scripts/robustness_study.py         # Fig 3 (~30 min on CPU)        -> results/robustness_study.csv
