@@ -26,7 +26,7 @@ The one-dimensional **heat problem** studied here is well known, with an exact s
   <img src="figures/diffusion_alpha.gif" width="70%">
 </p>
 
-**Fig 0:** Heat diffusion along a bar of arbitrary length $L$, for different thermal diffusivities $\alpha$ (m²/s). Larger $\alpha$ means faster diffusion: the bar reaches equilibrium (temperature $T$ equals 0 everywhere) sooner. **[Try the interactive version](docs/interactive/heat_bar_explorer.html)** — adjust $\alpha$ and the initial condition live (clone the repo and open the file in a browser).
+**Fig 0:** Heat diffusion along a bar of arbitrary length $L$, for different thermal diffusivities $\alpha$ (m²/s). Larger $\alpha$ means faster diffusion: the bar reaches equilibrium (temperature $T$ equals 0 everywhere) sooner. **[Try the interactive version](https://qp-dev-ai.github.io/pinn-heat-diffusion_1D/interactive/heat_bar_explorer.html)** — adjust $\alpha$ and the initial condition live.
 
 ## Forward problem
 
