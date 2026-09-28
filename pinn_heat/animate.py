@@ -88,8 +88,8 @@ def training_gif(path, rec, alpha_true, history, curve="loss", obs=None, fps=10,
         ax1.scatter(obs["x"], obs["T_obs"], c=colors[idx],
                     s=22, edgecolors="black", linewidths=0.5, zorder=5, label="noisy data")
     ax1.plot([], [], ls="--", color="0.35", label="exact")
-    ax1.set(xlabel="x (m)", ylabel="T(x, t)", ylim=(-0.15, 1.15), title="Temperature profiles")
-    ax1.legend(fontsize=7.5, loc="upper right", ncol=2)
+    ax1.set(xlabel="x (m)", ylabel="T(x, t)", ylim=(-0.15, 1.5), title="Temperature profiles")
+    ax1.legend(fontsize=7, loc="upper right", ncol=2)
 
     its = np.arange(1, len(history[curve]) + 1)
     y = history[curve]
