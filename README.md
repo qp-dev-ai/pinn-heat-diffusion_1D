@@ -1,4 +1,4 @@
-# Physics-Informed Neural Networks for 1D heat diffusion (development in progreess)
+# Physics-Informed Neural Networks for 1D heat diffusion (development in progress)
 
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![JAX](https://img.shields.io/badge/JAX-float64-orange)
