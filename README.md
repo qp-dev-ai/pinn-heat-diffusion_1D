@@ -28,21 +28,6 @@ A bar of arbitrary material (metal, ceramic, etc.) **starts hot in the middle, w
 
 The one-dimensional **heat problem** studied here is well known, with an exact solution, which turns it into a **controlled laboratory that lets the PINN methodology be pushed to its limits**. It is therefore a **good benchmark before applying PINNs to more realistic, non-ideal problems**.
 
-## Equation and analytical solution
-
-The equation for the 1D heat diffusion problem is:
-
-$$
-\frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2}, \qquad x \in [0, L],\ t \in [0, t_{\max}]
-$$
-
-The initial conditions are:
-
-- $T(x, 0) = \sin(\pi x / L)$: **the bar's initial temperature profile, hot in the middle and zero at the ends**;
-- $T(0, t) = 0$ and $T(L, t) = 0$ for every $t$ up to $t_{\max}$: **both ends sit in an infinite $T=0$ reservoir**, so heat continuously drains out there.
-
-The exact solution is 𝑻(𝒙,𝒕) = 𝒔𝒊𝒏(𝝅𝒙/𝑳) × 𝒆<sup>−𝜶(𝝅/𝑳)²𝒕</sup> ($T$ is dimensionless, normalized so the initial temperature peak is 1, at t = 0 and x = L/2).
-
 ## Forward problem
 
 In the forward problem, the thermal diffusivity ($\alpha$), the initial condition, and the boundary conditions are known. The goal is to reconstruct the temperature field ($T(x,t)$). We first train the PINN using the heat equation and the prescribed conditions alone, then examine the effect of adding temperature measurements. In both cases, we compare its predictions with the analytical solution.
@@ -75,7 +60,25 @@ For this particular problem, a PINN has limited practical value because the solu
 
 Left panel: profiles of the sensitivity-weighted run (solid) against the exact solution (dashed), with the measurements coloured by time. Right panel: physics loss (solid) and data MSE (dashed). This dataset is one where the weighting helps markedly; the statistics over many datasets are given below.
 
-## Method
+<details>
+<summary><b>Details: equation, method, parameter identifiability, robustness study</b></summary>
+
+### Equation and analytical solution
+
+The equation for the 1D heat diffusion problem is:
+
+$$
+\frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2}, \qquad x \in [0, L],\ t \in [0, t_{\max}]
+$$
+
+The initial conditions are:
+
+- $T(x, 0) = \sin(\pi x / L)$: **the bar's initial temperature profile, hot in the middle and zero at the ends**;
+- $T(0, t) = 0$ and $T(L, t) = 0$ for every $t$ up to $t_{\max}$: **both ends sit in an infinite $T=0$ reservoir**, so heat continuously drains out there.
+
+The exact solution is 𝑻(𝒙,𝒕) = 𝒔𝒊𝒏(𝝅𝒙/𝑳) × 𝒆<sup>−𝜶(𝝅/𝑳)²𝒕</sup> ($T$ is dimensionless, normalized so the initial temperature peak is 1, at t = 0 and x = L/2).
+
+### Method
 
 | Component | Choice | Why |
 |---|---|---|
@@ -88,7 +91,7 @@ Left panel: profiles of the sensitivity-weighted run (solid) against the exact s
 | Loss | $\mathcal{L} = \overline{R^2} + \lambda\, \overline{w\,(T_\theta - T_{\text{obs}})^2}$ | Physics plus (optionally weighted) data fit |
 | Optimizer | L-BFGS (`jaxopt`), float64 | Converges quickly and reliably on smooth PINN losses |
 
-## Parameter identifiability and sensitivity weighting
+### Parameter identifiability and sensitivity weighting
 
 Not every measurement carries the same information about $\alpha$. The sensitivity of the solution to the parameter is
 
@@ -104,7 +107,7 @@ The repository implements a **two-stage sensitivity-weighted** training:
 
 The weights are applied only to the data loss. The PDE residual has to hold everywhere, including in regions that carry little information about $\alpha$.
 
-## Robustness study
+### Robustness study
 
 The table below covers **36 inverse problems**: two diffusivities, three noise levels, three random datasets of 25 points, each solved with and without sensitivity weighting.
 
@@ -131,6 +134,8 @@ The table below covers **36 inverse problems**: two diffusivities, three noise l
 - **The effect of the sensitivity weighting depends on the regime.** For $\alpha = 0.18$ it changes nothing measurable. For $\alpha = 0.5$ it reduces the mean error by about one third at every noise level, and the worst case at 20% noise from 10.0% to 6.2%. Faster diffusion shrinks the time window in which measurements are informative, so emphasizing the informative points matters more.
 
 <!-- DATA_SIZE -->
+
+</details>
 
 ## Documentation
 
