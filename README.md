@@ -15,7 +15,7 @@ Over the past few years, **Scientific Machine Learning (SciML)** has grown in po
 
 ## The problem
 
-A bar of arbitrary material (metal, ceramic, etc.) **starts hot in the middle, with both ends held at zero temperature**, so heat drains out and the bar cools down over time. **The cooling speed depends on the thermal diffusivity**, which depends on the bar's material properties. This gives two questions:
+A bar of arbitrary material (metal, ceramic, etc.) **starts hot in the middle, with both ends held at zero temperature**, so heat drains out and the bar cools down over time. **The cooling speed depends on the thermal diffusivity**, which depends on the bar's material properties. Form this, two problems can be addressed:
 
 - the **forward problem**: given the thermal diffusivity, what does the temperature look like everywhere, at every time?
 - the **inverse problem**: given only a few noisy temperature measurements, what is the thermal diffusivity?
