@@ -40,17 +40,19 @@ In the forward problem, the thermal diffusivity $\alpha$, the initial condition,
 
 ## Inverse problem
 
+In the inverse problem, only the initial and boundary conditions are known: the thermal diffusivity $\alpha$ and the temperature field $T(x,t)$ are both estimated together from sparse, noisy temperature measurements (see [Details](#details-equation-method-parameter-identifiability-robustness-study) for how the choice of $\alpha$ parameterization can make or break this).
+
 <p align="center">
-  <img src="figures/inverse_training.gif" width="100%">
+  <img src="figures/inverse_simple_alpha.gif" width="95%">
 </p>
 
-**Fig 2:** *Inverse problem.* Starting from a wrong guess ($\alpha_0 = 1.0$), the PINN learns both the temperature field and the thermal diffusivity from 18 noisy measurements (20% noise, true $\alpha = 0.5$). The same dataset is used for three training variants:
+**Fig 2:** *Inverse problem.* Starting from a wrong guess ($\alpha_0 = 0.3$), the PINN recovers both the temperature field and the thermal diffusivity from 18 noisy measurements (10% noise, true $\alpha = 0.5$). Left panel: predicted profiles (solid) against the exact solution (dashed), with the measurements coloured by time. Right panel: the estimated $\alpha$ converging toward the true value (dashed).
 
-- 🟠 **$\alpha = \text{softplus}(\beta)$.** The first L-BFGS step sends $\beta$ to a large negative value. Softplus then saturates ($\alpha \approx 10^{-31}$, $d\alpha/d\beta \approx 0$), so $\alpha$ can never recover. The network is stuck on the **trivial solution $\alpha \to 0$**, and both losses plateau near $10^{-1}$.
-- ⚪ **$\alpha = \alpha_{\min} + \beta^2$, unweighted.** The gradient $d\alpha/d\beta = 2\beta$ only shrinks linearly as $\alpha \to 0$. $\alpha$ therefore dips to about 0.06, recovers once the network has fitted the data, and reaches $\hat\alpha = 0.450$ (10.0% error).
-- 🔵 **$\alpha = \alpha_{\min} + \beta^2$, sensitivity-weighted.** Measurements are reweighted by their sensitivity to $\alpha$ (see below), giving $\hat\alpha = 0.469$ (6.2% error).
+<p align="center">
+  <img src="figures/inverse_simple_loss.gif" width="95%">
+</p>
 
-Left panel: profiles of the sensitivity-weighted run (solid) against the exact solution (dashed), with the measurements coloured by time. Right panel: physics loss (solid) and data MSE (dashed). This dataset is one where the weighting helps markedly; the statistics over many datasets are given below.
+**Fig 2b:** Same run; the right panel now shows the total, physics-only, and data-only components of the loss instead of $\alpha$.
 
 <details>
 <summary>
@@ -111,6 +113,20 @@ The repository implements a **two-stage sensitivity-weighted** training:
 
 The weights are applied only to the data loss. The PDE residual has to hold everywhere, including in regions that carry little information about $\alpha$.
 
+### Comparing alpha parameterizations
+
+<p align="center">
+  <img src="figures/inverse_training.gif" width="100%">
+</p>
+
+**Fig 2c:** *Comparing $\alpha$ parameterizations.* Starting from a wrong guess ($\alpha_0 = 1.0$), the PINN learns both the temperature field and the thermal diffusivity from 18 noisy measurements (20% noise, true $\alpha = 0.5$). The same dataset is used for three training variants:
+
+- 🟠 **$\alpha = \text{softplus}(\beta)$.** The first L-BFGS step sends $\beta$ to a large negative value. Softplus then saturates ($\alpha \approx 10^{-31}$, $d\alpha/d\beta \approx 0$), so $\alpha$ can never recover. The network is stuck on the **trivial solution $\alpha \to 0$**, and both losses plateau near $10^{-1}$.
+- ⚪ **$\alpha = \alpha_{\min} + \beta^2$, unweighted.** The gradient $d\alpha/d\beta = 2\beta$ only shrinks linearly as $\alpha \to 0$. $\alpha$ therefore dips to about 0.06, recovers once the network has fitted the data, and reaches $\hat\alpha = 0.450$ (10.0% error).
+- 🔵 **$\alpha = \alpha_{\min} + \beta^2$, sensitivity-weighted.** Measurements are reweighted by their sensitivity to $\alpha$ (above), giving $\hat\alpha = 0.469$ (6.2% error).
+
+Left panel: profiles of the sensitivity-weighted run (solid) against the exact solution (dashed), with the measurements coloured by time. Right panel: physics loss (solid) and data MSE (dashed). This dataset is one where the weighting helps markedly; the statistics over many datasets are given below.
+
 ### Robustness study
 
 The table below covers **36 inverse problems**: two diffusivities, three noise levels, three random datasets of 25 points, each solved with and without sensitivity weighting.
@@ -159,7 +175,8 @@ pip install -r requirements.txt
 ```bash
 python scripts/diffusion.py                # Fig 0: diffusion animation    -> figures/diffusion_alpha.gif
 python scripts/forward.py                  # Fig 1: forward problem        -> figures/forward_*
-python scripts/inverse.py                  # Fig 2: inverse problem, 3 variants -> figures/inverse_*
+python scripts/inverse_simple.py           # Fig 2: inverse problem, single run -> figures/inverse_simple_*
+python scripts/inverse.py                  # Fig 2c: comparing alpha parameterizations -> figures/inverse_*
 python scripts/inverse.py --alpha_true 0.18 --noise 0.1 --n_obs 50
 python scripts/robustness_study.py         # Fig 3 (~30 min on CPU)        -> results/robustness_study.csv
 python scripts/data_size_study.py          # Fig 4 (~1 h on CPU)           -> results/data_size_study.csv
@@ -187,7 +204,7 @@ pinn_heat/
   inverse.py    inverse fit and sensitivity weights
   plotting.py   figure style
   animate.py    training animations, diffusion-bar animation
-scripts/        diffusion.py, forward.py, inverse.py, robustness_study.py, data_size_study.py
+scripts/        diffusion.py, forward.py, inverse_simple.py, inverse.py, robustness_study.py, data_size_study.py
 figures/        generated figures and animations
 results/        study results (CSV)
 docs/           technical note, implementation details (PDF + LaTeX source), interactive diffusion explorer
