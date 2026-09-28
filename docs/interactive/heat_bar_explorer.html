@@ -188,7 +188,7 @@ button.ghost{
           <input type="range" id="lengthSlider" min="0.5" max="3" step="0.1" value="1">
         </div>
         <div class="field">
-          <label for="tmaxSlider" id="tmaxLabel">Max time t<sub class="sym">max</sub> = 1.5 s</label>
+          <label for="tmaxSlider" id="tmaxLabel">Max time <span class="sym">t<sub>max</sub></span> = 1.5 s</label>
           <input type="range" id="tmaxSlider" min="0.5" max="5" step="0.1" value="1.5">
         </div>
       </div>
@@ -442,7 +442,7 @@ button.ghost{
   function setTMax(v){
     T_MAX = v;
     tmaxSlider.value = v;
-    tmaxLabel.innerHTML = `Max time t<sub class="sym">max</sub> = ${T_MAX.toFixed(1)} s`;
+    tmaxLabel.innerHTML = `Max time <span class="sym">t<sub>max</sub></span> = ${T_MAX.toFixed(1)} s`;
     t = 0;
     lastFrame = null;
     draw();
