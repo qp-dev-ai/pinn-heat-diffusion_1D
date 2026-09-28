@@ -30,7 +30,7 @@ The one-dimensional **heat problem** studied here is well known, with an exact s
 
 ## Forward problem
 
-In the forward problem, the thermal diffusivity ($\alpha$), the initial condition, and the boundary conditions are known. The goal is to reconstruct the temperature field ($T(x,t)$). The PINN is trained using the heat equation and the prescribed conditions alone, and its predictions are compared with the analytical solution. The forward problem may also use both data and the physics to reconstruct the temperature profile (see [Details](#details-equation-method-parameter-identifiability-robustness-study)).
+In the forward problem, the thermal diffusivity $\alpha$, the initial condition, and the boundary conditions are known. The goal is to reconstruct the temperature field $T(x,t)$. The PINN is trained using the heat equation and the prescribed conditions alone, and its predictions are compared with the analytical solution. The forward problem may also use both data and the physics to reconstruct the temperature profile (see [Details](#details-equation-method-parameter-identifiability-robustness-study)).
 
 <p align="center">
   <img src="figures/forward_training.gif" width="95%">
