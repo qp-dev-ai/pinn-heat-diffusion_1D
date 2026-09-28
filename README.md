@@ -15,18 +15,18 @@ Over the past few years, **Scientific Machine Learning (SciML)** has grown in po
 
 ## The problem
 
-<p align="center">
-  <img src="figures/diffusion_alpha.gif" width="70%">
-</p>
-
-**Fig 0:** Heat diffusion along a bar of arbitrary length $L$, for different thermal diffusivities $\alpha$ (m²/s). Larger $\alpha$ means faster diffusion: the bar reaches equilibrium (temperature $T$ equals 0 everywhere) sooner. **[Try the interactive version](docs/interactive/heat_bar_explorer.html)** — adjust $\alpha$ and the initial condition live (clone the repo and open the file in a browser).
-
 A bar of arbitrary material (metal, ceramic, etc.) **starts hot in the middle, with both ends held at zero temperature**, so heat drains out and the bar cools down over time. **The cooling speed depends on the thermal diffusivity**, which depends on the bar's material properties. This gives two questions:
 
 - the **forward problem**: given the thermal diffusivity, what does the temperature look like everywhere, at every time?
 - the **inverse problem**: given only a few noisy temperature measurements, what is the thermal diffusivity?
 
 The one-dimensional **heat problem** studied here is well known, with an exact solution, which turns it into a **controlled laboratory that lets the PINN methodology be pushed to its limits**. It is therefore a **good benchmark before applying PINNs to more realistic, non-ideal problems**.
+
+<p align="center">
+  <img src="figures/diffusion_alpha.gif" width="70%">
+</p>
+
+**Fig 0:** Heat diffusion along a bar of arbitrary length $L$, for different thermal diffusivities $\alpha$ (m²/s). Larger $\alpha$ means faster diffusion: the bar reaches equilibrium (temperature $T$ equals 0 everywhere) sooner. **[Try the interactive version](docs/interactive/heat_bar_explorer.html)** — adjust $\alpha$ and the initial condition live (clone the repo and open the file in a browser).
 
 ## Forward problem
 
@@ -61,7 +61,11 @@ For this particular problem, a PINN has limited practical value because the solu
 Left panel: profiles of the sensitivity-weighted run (solid) against the exact solution (dashed), with the measurements coloured by time. Right panel: physics loss (solid) and data MSE (dashed). This dataset is one where the weighting helps markedly; the statistics over many datasets are given below.
 
 <details>
-<summary><b>Details: equation, method, parameter identifiability, robustness study</b></summary>
+<summary>
+
+## Details: equation, method, parameter identifiability, robustness study
+
+</summary>
 
 ### Equation and analytical solution
 
