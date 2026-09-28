@@ -350,7 +350,7 @@ button.ghost{
   // T(x) line chart: a single animated curve showing the spatial decay over time.
   // Axis titles live in the HTML (.chart-ylabel / .chart-xlabel) above/below the canvas,
   // so only the numeric ticks are drawn here -- nothing on the canvas can collide with them.
-  const PAD = { l: 46, r: 16, t: 14, b: 26 };
+  const PAD = { l: 64, r: 16, t: 14, b: 26 };
   const plotW = CW - PAD.l - PAD.r, plotH = CH - PAD.t - PAD.b;
   function px(x){ return PAD.l + (x / L) * plotW; }
   function py(v){ return PAD.t + (1 - v) * plotH; } // v in [0, 1]
@@ -360,7 +360,7 @@ button.ghost{
 
     cctx.strokeStyle = 'rgba(168,154,144,0.25)';
     cctx.fillStyle = '#a89a90';
-    cctx.font = '18px "IBM Plex Mono", monospace';
+    cctx.font = '16px "IBM Plex Mono", monospace';
     cctx.lineWidth = 1;
     [0, 0.25, 0.5, 0.75, 1].forEach(v => {
       const y = py(v);
