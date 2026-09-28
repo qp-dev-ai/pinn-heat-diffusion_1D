@@ -36,9 +36,14 @@ h1{ font-size:26px; font-weight:800; margin:0 0 10px; letter-spacing:-.01em; }
 .formula{
   font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--text);
   background:var(--panel-2); border:1px solid var(--edge); border-radius:8px;
-  padding:10px 14px; margin:0 0 24px; overflow-x:auto; white-space:nowrap;
+  padding:12px 14px; margin:0 0 24px; display:flex; flex-direction:column; gap:8px;
 }
 .formula b{ color:var(--orange); font-weight:600; }
+.formula-row{ display:flex; align-items:baseline; gap:10px; overflow-x:auto; white-space:nowrap; }
+.formula-label{
+  flex:0 0 auto; font-family:"IBM Plex Mono", monospace; font-size:10px; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted); min-width:84px;
+}
 .card{
   background:var(--panel); border:1px solid var(--edge); border-radius:16px;
   padding:20px; display:flex; flex-direction:column; gap:18px;
@@ -121,9 +126,18 @@ button.ghost{
     <span class="sym">&alpha;</span>, and watch how fast the bar cools back to zero.
   </p>
   <div class="formula">
-    &part;T&frasl;&part;t <b>=</b> &alpha; &part;&sup2;T&frasl;&part;x&sup2;
-    &nbsp;&nbsp;|&nbsp;&nbsp; T(0,t) = T(L,t) = 0
-    &nbsp;&nbsp;|&nbsp;&nbsp; T(x,0) = <span id="icFormula">sin(&pi;x&frasl;L)</span>
+    <div class="formula-row">
+      <span class="formula-label">Equation</span>
+      <span>&part;T&frasl;&part;t <b>=</b> &alpha; &part;&sup2;T&frasl;&part;x&sup2;</span>
+    </div>
+    <div class="formula-row">
+      <span class="formula-label">Boundary condition</span>
+      <span>T(0,t) = T(L,t) = 0</span>
+    </div>
+    <div class="formula-row">
+      <span class="formula-label">Initial condition</span>
+      <span>T(x,0) = <span id="icFormula">sin(&pi;x&frasl;L)</span></span>
+    </div>
   </div>
   <p class="note" style="margin:-14px 0 24px;">
     Units: x in <b>m</b>, <span class="sym">&alpha;</span> in <b>m&sup2;&frasl;s</b>, t in <b>s</b>.
@@ -175,6 +189,19 @@ button.ghost{
         <div class="field">
           <label for="lengthSlider" id="lengthLabel">Bar length L = 1.0 m</label>
           <input type="range" id="lengthSlider" min="0.5" max="3" step="0.1" value="1">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="tmaxPreset">Preset t<sub>max</sub></label>
+          <select id="tmaxPreset">
+            <option value="0.5">t_max = 0.5 s</option>
+            <option value="1.5" selected>t_max = 1.5 s</option>
+            <option value="3">t_max = 3.0 s</option>
+            <option value="5">t_max = 5.0 s</option>
+            <option value="custom">Custom&hellip;</option>
+          </select>
         </div>
         <div class="field">
           <label for="tmaxSlider" id="tmaxLabel">Max time = 1.5 s</label>
@@ -238,6 +265,7 @@ button.ghost{
   const speedSlider = document.getElementById('speed');
   const lengthSlider = document.getElementById('lengthSlider');
   const tmaxSlider = document.getElementById('tmaxSlider');
+  const tmaxPreset = document.getElementById('tmaxPreset');
   const lengthLabel = document.getElementById('lengthLabel');
   const tmaxLabel = document.getElementById('tmaxLabel');
 
@@ -423,19 +451,33 @@ button.ghost{
     draw();
   });
 
-  function onGeometryChange(){
+  function onLengthChange(){
     L = parseFloat(lengthSlider.value);
-    T_MAX = parseFloat(tmaxSlider.value);
     lengthLabel.textContent = `Bar length L = ${L.toFixed(1)} m`;
-    tmaxLabel.textContent = `Max time = ${T_MAX.toFixed(1)} s`;
     rebuildGrid();
     coeffs = fourierCoeffs(IC_PROFILES[icPreset.value].fn);
     t = 0;
     lastFrame = null;
     draw();
   }
-  lengthSlider.addEventListener('input', onGeometryChange);
-  tmaxSlider.addEventListener('input', onGeometryChange);
+  lengthSlider.addEventListener('input', onLengthChange);
+
+  function setTMax(v){
+    T_MAX = v;
+    tmaxSlider.value = v;
+    tmaxLabel.textContent = `Max time = ${T_MAX.toFixed(1)} s`;
+    t = 0;
+    lastFrame = null;
+    draw();
+  }
+  tmaxPreset.addEventListener('change', () => {
+    if (tmaxPreset.value === 'custom') return;
+    setTMax(parseFloat(tmaxPreset.value));
+  });
+  tmaxSlider.addEventListener('input', () => {
+    tmaxPreset.value = 'custom';
+    setTMax(parseFloat(tmaxSlider.value));
+  });
 
   playBtn.addEventListener('click', () => {
     playing = !playing;
