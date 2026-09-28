@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import numpy as np  # noqa: E402
+from scipy.optimize import minimize_scalar  # noqa: E402
 
 from pinn_heat import exact_solution  # noqa: E402
 from pinn_heat.animate import PROFILE_TIMES, ProfileRecorder, inverse_single_gif  # noqa: E402
@@ -37,8 +38,6 @@ def profile_observations(times, n_per_time, alpha, noise_level, L, seed):
     rng = np.random.default_rng(seed)
     ts, xs, T_obs, T_clean = [], [], [], []
     for tk in times:
-        if tk == 0:
-            continue  # skip t=0: fixed sinusoidal IC, nothing to "measure"
         x_k = rng.uniform(0.05 * L, 0.95 * L, n_per_time)
         Tc_k = exact_solution(x_k, tk, alpha, L)
         sigma = noise_level * np.std(Tc_k)
@@ -50,7 +49,22 @@ def profile_observations(times, n_per_time, alpha, noise_level, L, seed):
             "T_clean": np.concatenate(T_clean), "sigma": noise_level}
 
 
+def fit_alpha_least_squares(obs, L):
+    """Classical (non-PINN) least-squares fit of the analytical solution to the data alone:
+    the alpha an L2 data loss can actually be expected to recover, noise and all -- as
+    opposed to the noise-free alpha_true used to generate that data in the first place.
+    """
+    k2 = (np.pi / L) ** 2
+
+    def sse(alpha):
+        pred = np.sin(np.pi * obs["x"] / L) * np.exp(-alpha * k2 * obs["t"])
+        return np.sum((pred - obs["T_obs"]) ** 2)
+
+    return minimize_scalar(sse, bounds=(1e-4, 5.0), method="bounded").x
+
+
 obs = profile_observations(PROFILE_TIMES, args.n_per_time, args.alpha_true, args.noise, L, seed=args.data_seed)
+alpha_fit = fit_alpha_least_squares(obs, L)
 print(f"Inverse problem (simple) | alpha_true = {args.alpha_true} | {len(obs['t'])} observations "
       f"| noise {100 * args.noise:.0f}% | alpha_init = {args.alpha_init}")
 
@@ -61,8 +75,11 @@ if rec.iters[-1] != len(hist["loss"]) - 1:
     rec(len(hist["loss"]) - 1, params)
 
 err = 100 * abs(alpha_hat - args.alpha_true) / args.alpha_true
-print(f"\nalpha_hat = {alpha_hat:.4f} (true {args.alpha_true}, relative error {err:.2f}%)")
+err_fit = 100 * abs(alpha_hat - alpha_fit) / alpha_fit
+print(f"\nalpha_true = {args.alpha_true}")
+print(f"alpha_fit  = {alpha_fit:.4f}  (least-squares fit of the exact solution to the data alone)")
+print(f"alpha_hat  = {alpha_hat:.4f}  (PINN estimate; {err:.2f}% from true, {err_fit:.2f}% from the data fit)")
 
 out = ROOT / "figures"
-inverse_single_gif(out / "inverse_simple_training.gif", rec, args.alpha_true, hist, obs)
+inverse_single_gif(out / "inverse_simple_training.gif", rec, args.alpha_true, hist, obs, alpha_ref=alpha_fit)
 print(f"Figures saved to {out}")

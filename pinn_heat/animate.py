@@ -101,7 +101,7 @@ def training_gif(path, rec, alpha_true, history, curve="loss", obs=None, fps=10,
         (dot,) = ax2.plot([], [], "o", color=BLUE)
         traces = [(trace, dot, y)]
         ax2.axhline(alpha_true, color=ORANGE, ls="--", lw=1.5, label=f"true alpha = {alpha_true}")
-        ax2.set(ylabel="alpha", title="Estimated diffusivity")
+        ax2.set(ylabel="alpha", title="Estimated thermal diffusivity")
         ax2.set_ylim(min(y.min(), alpha_true) / 1.5, max(y.max(), alpha_true) * 1.5)
         ax2.legend(fontsize=8)
     else:
@@ -144,13 +144,24 @@ def training_gif(path, rec, alpha_true, history, curve="loss", obs=None, fps=10,
     plt.close(fig)
 
 
-def inverse_single_gif(path, rec, alpha_true, history, obs, fps=10, hold=20):
-    """Inverse problem, one run: profiles | alpha convergence | loss breakdown, side by side."""
+def inverse_single_gif(path, rec, alpha_true, history, obs, alpha_ref=None, fps=10, hold=20):
+    """Inverse problem, one run: profiles + loss on top, alpha convergence centred below.
+
+    `alpha_ref` is the value drawn as the dashed reference line in the alpha panel; it
+    defaults to `alpha_true` but is typically the least-squares fit of the analytical
+    solution to the (noisy) data, since that -- not the noise-free theoretical alpha --
+    is what an L2 loss can actually be expected to converge to.
+    """
+    if alpha_ref is None:
+        alpha_ref = alpha_true
     colors = cm.viridis(np.linspace(0, 0.9, len(rec.times)))
     T_exact = exact_solution(rec.x[None, :], rec.times[:, None], alpha_true, rec.L)
 
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 3.8), gridspec_kw={"width_ratios": [1.15, 1, 1]},
-                                        constrained_layout=True)
+    fig, axd = plt.subplot_mosaic(
+        [["profiles", "profiles", "loss", "loss"], [".", "alpha", "alpha", "."]],
+        figsize=(10.5, 7.2), constrained_layout=True,
+    )
+    ax1, ax2, ax3 = axd["profiles"], axd["alpha"], axd["loss"]
 
     lines = []
     for k, (tk, c) in enumerate(zip(rec.times, colors)):
@@ -166,11 +177,12 @@ def inverse_single_gif(path, rec, alpha_true, history, obs, fps=10, hold=20):
 
     its = np.arange(1, len(history["loss"]) + 1)
     y_alpha = history["alpha"]
-    (trace_a,) = ax2.plot([], [], color=BLUE, lw=2)
+    (trace_a,) = ax2.plot([], [], color=BLUE, lw=2, label="$\\alpha$ estimated by the PINN")
     (dot_a,) = ax2.plot([], [], "o", color=BLUE)
-    ax2.axhline(alpha_true, color=ORANGE, ls="--", lw=1.5, label=f"true alpha = {alpha_true}")
-    ax2.set(xscale="log", xlim=(1, its[-1] * 1.2), ylabel="alpha", title="Estimated diffusivity")
-    ax2.set_ylim(min(y_alpha.min(), alpha_true) / 1.5, max(y_alpha.max(), alpha_true) * 1.5)
+    ax2.axhline(alpha_ref, color=ORANGE, ls="--", lw=1.5,
+                label=f"$\\alpha$ fit (least squares on the data) = {alpha_ref:.4f}")
+    ax2.set(xscale="log", xlim=(1, its[-1] * 1.2), ylabel="$\\alpha$", title="Estimated thermal diffusivity")
+    ax2.set_ylim(min(y_alpha.min(), alpha_ref) / 1.5, max(y_alpha.max(), alpha_ref) * 1.5)
     ax2.set_xlabel("training iteration")
     ax2.legend(fontsize=8)
 
@@ -250,7 +262,7 @@ def inverse_comparison_gif(path, rec, runs, alpha_true, obs, title="", fps=10, h
         ld = ax3.plot([], [], color=r["color"], lw=1.5, ls="--")[0]
         traces.append((h, a, lp, ld))
     ax2.set(xscale="log", xlim=(1, n_it * 1.2), ylim=(-0.03, 1.05), xlabel="training iteration", ylabel="alpha",
-            title="Estimated diffusivity")
+            title="Estimated thermal diffusivity")
     ax2.legend(fontsize=7.5, loc="upper right")
     ax3.plot([], [], color="0.3", lw=2, label="physics loss (PDE residual)")
     ax3.plot([], [], color="0.3", lw=1.5, ls="--", label="data MSE")
