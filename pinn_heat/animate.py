@@ -7,7 +7,7 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 
 from .physics import exact_solution
 from .pinn import predict
-from .plotting import BLUE, ORANGE, plt
+from .plotting import BLUE, GREY, ORANGE, plt
 
 PROFILE_TIMES = np.array([0.0, 0.15, 0.4, 0.8, 1.5])
 
@@ -81,7 +81,11 @@ def training_gif(path, rec, alpha_true, history, curve="loss", obs=None, fps=10,
         ax1.plot(rec.x, T_exact[k], ls="--", lw=1.2, color="0.35")
         lines.append(ax1.plot(rec.x, rec.profiles[0][k], color=c, lw=2.2, label=f"t = {tk:g} s")[0])
     if obs is not None:
-        ax1.scatter(obs["x"], obs["T_obs"], c=obs["t"], cmap="viridis", vmin=0, vmax=rec.times.max() / 0.9,
+        # Colour each point like its closest profile line (by time), not by raw t value:
+        # rec.times is unevenly spaced, so a value-based colormap would not match the
+        # rank-based line colours above.
+        idx = np.argmin(np.abs(obs["t"][:, None] - rec.times[None, :]), axis=1)
+        ax1.scatter(obs["x"], obs["T_obs"], c=colors[idx],
                     s=22, edgecolors="black", linewidths=0.5, zorder=5, label="noisy data")
     ax1.plot([], [], ls="--", color="0.35", label="exact")
     ax1.set(xlabel="x (m)", ylabel="T(x, t)", ylim=(-0.15, 1.15), title="Temperature profiles")
@@ -89,19 +93,34 @@ def training_gif(path, rec, alpha_true, history, curve="loss", obs=None, fps=10,
 
     its = np.arange(1, len(history[curve]) + 1)
     y = history[curve]
-    (trace,) = ax2.plot([], [], color=BLUE, lw=2)
-    (dot,) = ax2.plot([], [], "o", color=BLUE)
     ax2.set_xscale("log")
     ax2.set_yscale("log")
     ax2.set_xlim(1, its[-1] * 1.2)
     if curve == "alpha":
+        (trace,) = ax2.plot([], [], color=BLUE, lw=2)
+        (dot,) = ax2.plot([], [], "o", color=BLUE)
+        traces = [(trace, dot, y)]
         ax2.axhline(alpha_true, color=ORANGE, ls="--", lw=1.5, label=f"true alpha = {alpha_true}")
         ax2.set(ylabel="alpha", title="Estimated diffusivity")
         ax2.set_ylim(min(y.min(), alpha_true) / 1.5, max(y.max(), alpha_true) * 1.5)
         ax2.legend(fontsize=8)
     else:
+        has_data = obs is not None
+        total_label = "total loss" if has_data else "total loss = physics loss"
+        (trace_total,) = ax2.plot([], [], color=BLUE, lw=2, label=total_label)
+        (dot_total,) = ax2.plot([], [], "o", color=BLUE)
+        traces = [(trace_total, dot_total, history["loss"])]
+        if has_data:
+            (trace_phys,) = ax2.plot([], [], color=GREY, lw=1.5, ls="--", label="physics loss")
+            (dot_phys,) = ax2.plot([], [], "o", color=GREY, ms=4)
+            (trace_data,) = ax2.plot([], [], color=ORANGE, lw=1.5, ls=":", label="data loss")
+            (dot_data,) = ax2.plot([], [], "o", color=ORANGE, ms=4)
+            traces += [(trace_phys, dot_phys, history["loss_phys"]), (trace_data, dot_data, history["loss_data"])]
+        all_y = np.concatenate([yy for *_, yy in traces])
+        all_y = all_y[np.isfinite(all_y) & (all_y > 0)]
         ax2.set(ylabel="loss", title="Training loss")
-        ax2.set_ylim(y.min() / 3, y.max() * 3)
+        ax2.set_ylim(all_y.min() / 3, all_y.max() * 8)
+        ax2.legend(fontsize=7, loc="upper right")
     ax2.set_xlabel("training iteration")
     label = ax2.text(0.03, 0.05, "", transform=ax2.transAxes, fontsize=9,
                      bbox=dict(boxstyle="round", fc="white", ec="0.8"))
@@ -112,13 +131,14 @@ def training_gif(path, rec, alpha_true, history, curve="loss", obs=None, fps=10,
         it = rec.iters[f]
         for k, ln in enumerate(lines):
             ln.set_ydata(rec.profiles[f][k])
-        trace.set_data(its[: it + 1], y[: it + 1])
-        dot.set_data([its[it]], [y[it]])
+        for trace, dot, yy in traces:
+            trace.set_data(its[: it + 1], yy[: it + 1])
+            dot.set_data([its[it]], [yy[it]])
         txt = f"iteration {it + 1}"
         if curve == "alpha":
             txt += f"\nalpha = {y[it]:.4f}"
         label.set_text(txt)
-        return lines + [trace, dot, label]
+        return lines + [t[0] for t in traces] + [t[1] for t in traces] + [label]
 
     FuncAnimation(fig, draw, frames=frames, blit=False).save(path, writer=PillowWriter(fps=fps))
     plt.close(fig)
@@ -143,7 +163,11 @@ def inverse_comparison_gif(path, rec, runs, alpha_true, obs, title="", fps=10, h
     for k, (tk, c) in enumerate(zip(rec.times, colors)):
         ax1.plot(rec.x, T_exact[k], ls="--", lw=1.2, color="0.35")
         lines.append(ax1.plot(rec.x, rec.profiles[0][k], color=c, lw=2.4, label=f"t = {tk:g}")[0])
-    ax1.scatter(obs["x"], obs["T_obs"], c=obs["t"], cmap="viridis", vmin=0, vmax=rec.times.max() / 0.75,
+    # Colour each point like its closest profile line (by time), not by raw t value:
+    # rec.times is unevenly spaced, so a value-based colormap would not match the
+    # rank-based line colours above.
+    idx = np.argmin(np.abs(obs["t"][:, None] - rec.times[None, :]), axis=1)
+    ax1.scatter(obs["x"], obs["T_obs"], c=colors[idx],
                 s=22, edgecolors="black", linewidths=0.5, zorder=5, label="noisy data (colour = time)")
     ax1.plot([], [], ls="--", color="0.35", label="exact")
     ax1.set(xlabel="x", ylabel="T(x, t)", ylim=(-0.2, 1.2), title=f"Temperature profiles ({runs[-1]['label']})")
