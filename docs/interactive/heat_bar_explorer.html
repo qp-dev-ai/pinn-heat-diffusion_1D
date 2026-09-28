@@ -66,7 +66,7 @@ canvas{
 }
 .legend .bar{
   flex:1; height:8px; border-radius:4px;
-  background:linear-gradient(90deg,#ffffff,#66e0ff,#1f94f3,#0f53d4,#0e1d8f,#0a0f3b,#000000,#3b0f0a,#8f1d0e,#d4530f,#f3941f,#ffe066,#ffffff);
+  background:linear-gradient(90deg,#000000,#3b0f0a,#8f1d0e,#d4530f,#f3941f,#ffe066,#ffffff);
   border:1px solid var(--edge);
 }
 .controls{ display:flex; flex-direction:column; gap:16px; }
@@ -130,12 +130,12 @@ button.ghost{
     </div>
 
     <div class="legend">
-      <span>T = &minus;1</span>
+      <span>T = 0 (dimensionless)</span>
       <div class="bar"></div>
       <span>T = 1</span>
     </div>
 
-    <canvas id="curve" width="1000" height="260"></canvas>
+    <canvas id="curve" width="1000" height="280"></canvas>
 
     <div class="controls">
       <div class="row">
@@ -144,15 +144,15 @@ button.ghost{
           <select id="alphaPreset">
             <option value="0.05">&alpha; = 0.05 &mdash; slow (insulator-like)</option>
             <option value="0.18" selected>&alpha; = 0.18</option>
-            <option value="0.5">&alpha; = 0.5</option>
-            <option value="0.9">&alpha; = 0.9</option>
-            <option value="1.3">&alpha; = 1.3 &mdash; fast</option>
+            <option value="0.4">&alpha; = 0.4</option>
+            <option value="0.7">&alpha; = 0.7</option>
+            <option value="1.0">&alpha; = 1.0 &mdash; fast</option>
             <option value="custom">Custom&hellip;</option>
           </select>
         </div>
         <div class="field">
-          <label for="alphaSlider">&alpha; (0.01 &ndash; 1.30)</label>
-          <input type="range" id="alphaSlider" min="0.01" max="1.3" step="0.01" value="0.18">
+          <label for="alphaSlider">&alpha; (0.01 &ndash; 1.00)</label>
+          <input type="range" id="alphaSlider" min="0.01" max="1" step="0.01" value="0.18">
         </div>
       </div>
 
@@ -161,11 +161,20 @@ button.ghost{
           <label for="icPreset">Initial condition T(x, 0)</label>
           <select id="icPreset">
             <option value="sin1" selected>sin(&pi;x&frasl;L) &mdash; fundamental mode</option>
-            <option value="sin2">sin(2&pi;x&frasl;L) &mdash; second harmonic</option>
-            <option value="sin3">sin(3&pi;x&frasl;L) &mdash; third harmonic</option>
-            <option value="sin4">sin(4&pi;x&frasl;L) &mdash; fourth harmonic</option>
-            <option value="sin5">sin(5&pi;x&frasl;L) &mdash; fifth harmonic</option>
+            <option value="sin2">|sin(2&pi;x&frasl;L)| &mdash; second harmonic</option>
+            <option value="sin3">|sin(3&pi;x&frasl;L)| &mdash; third harmonic</option>
+            <option value="sin4">|sin(4&pi;x&frasl;L)| &mdash; fourth harmonic</option>
+            <option value="sin5">|sin(5&pi;x&frasl;L)| &mdash; fifth harmonic</option>
           </select>
+        </div>
+      </div>
+
+      <div class="row playbar">
+        <button id="playBtn">Pause</button>
+        <button id="resetBtn" class="ghost">Restart</button>
+        <div class="field" style="min-width:140px;">
+          <label for="speed">Speed</label>
+          <input type="range" id="speed" min="0.25" max="2.5" step="0.25" value="1">
         </div>
       </div>
     </div>
@@ -175,7 +184,7 @@ button.ghost{
       at x&nbsp;=&nbsp;0 and x&nbsp;=&nbsp;L, which is why the bar always cools toward zero.
       Larger &alpha; means the same drop happens faster. Any initial shape is decomposed into sine
       modes (Fourier series); each mode n decays as e<sup>&minus;&alpha;(n&pi;&frasl;L)&sup2;t</sup>,
-      so sharper shapes (like the square pulse) smooth out fastest.
+      so higher harmonics fade out fastest.
     </p>
   </div>
 </div>
@@ -198,6 +207,9 @@ button.ghost{
   const tReadout = document.getElementById('tReadout');
   const icPreset = document.getElementById('icPreset');
   const icFormula = document.getElementById('icFormula');
+  const playBtn = document.getElementById('playBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const speedSlider = document.getElementById('speed');
 
   const xs = new Float64Array(N);
   for (let i = 0; i < N; i++) xs[i] = (i / (N - 1)) * L;
@@ -210,12 +222,14 @@ button.ghost{
     sinTable.push(row);
   }
 
+  // Higher harmonics use |sin(n pi x/L)| so T stays in [0, 1], like the fundamental mode,
+  // instead of dipping negative on alternating lobes.
   const IC_PROFILES = {
     sin1: { formula: 'sin(&pi;x&frasl;L)', fn: x => Math.sin(Math.PI * x / L) },
-    sin2: { formula: 'sin(2&pi;x&frasl;L)', fn: x => Math.sin(2 * Math.PI * x / L) },
-    sin3: { formula: 'sin(3&pi;x&frasl;L)', fn: x => Math.sin(3 * Math.PI * x / L) },
-    sin4: { formula: 'sin(4&pi;x&frasl;L)', fn: x => Math.sin(4 * Math.PI * x / L) },
-    sin5: { formula: 'sin(5&pi;x&frasl;L)', fn: x => Math.sin(5 * Math.PI * x / L) },
+    sin2: { formula: '|sin(2&pi;x&frasl;L)|', fn: x => Math.abs(Math.sin(2 * Math.PI * x / L)) },
+    sin3: { formula: '|sin(3&pi;x&frasl;L)|', fn: x => Math.abs(Math.sin(3 * Math.PI * x / L)) },
+    sin4: { formula: '|sin(4&pi;x&frasl;L)|', fn: x => Math.abs(Math.sin(4 * Math.PI * x / L)) },
+    sin5: { formula: '|sin(5&pi;x&frasl;L)|', fn: x => Math.abs(Math.sin(5 * Math.PI * x / L)) },
   };
 
   // Fourier sine-series coefficients a_n = (2/L) * integral( T0(x) sin(n pi x/L) dx ), trapezoidal rule.
@@ -239,12 +253,12 @@ button.ghost{
   let alpha = 0.18;
   let coeffs = fourierCoeffs(IC_PROFILES.sin1.fn);
   let t = 0;
+  let playing = true;
   let lastFrame = null;
 
-  // Diverging blackbody-ish colormap: warm (red/orange/white) for T > 0, symmetric
-  // cool (blue/cyan/white) for T < 0, black at T = 0. Lets negative-lobe presets
-  // (e.g. the second harmonic) show up instead of clipping to the same black as zero.
-  const warmStops = [
+  // Blackbody-ish colormap: black (T=0) -> deep red -> orange -> yellow -> white (T=1).
+  // T is clamped to [0, 1]: every preset here is built to stay in that range.
+  const stops = [
     [0.00, [0, 0, 0]],
     [0.18, [59, 15, 10]],
     [0.40, [143, 29, 14]],
@@ -253,9 +267,7 @@ button.ghost{
     [0.92, [255, 224, 102]],
     [1.00, [255, 255, 255]],
   ];
-  const coolStops = warmStops.map(([p, c]) => [p, [c[2], c[1], c[0]]]); // R/B channel swap
-
-  function ramp(stops, v){
+  function colormap(v){
     v = Math.min(1, Math.max(0, v));
     for (let i = 0; i < stops.length - 1; i++){
       const [p0, c0] = stops[i], [p1, c1] = stops[i+1];
@@ -269,10 +281,6 @@ button.ghost{
       }
     }
     return stops[stops.length - 1][1];
-  }
-  function colormap(v){
-    v = Math.min(1, Math.max(-1, v));
-    return v >= 0 ? ramp(warmStops, v) : ramp(coolStops, -v);
   }
 
   const imgData = ctx.createImageData(N, 1);
@@ -307,20 +315,20 @@ button.ghost{
   }
 
   // T(x) line chart: a single animated curve showing the spatial decay over time.
-  const PAD = { l: 42, r: 14, t: 16, b: 30 };
+  const PAD = { l: 56, r: 20, t: 20, b: 56 };
   const plotW = CW - PAD.l - PAD.r, plotH = CH - PAD.t - PAD.b;
   function px(x){ return PAD.l + (x / L) * plotW; }
-  function py(v){ return PAD.t + (1 - (v + 1) / 2) * plotH; } // v in [-1, 1]
+  function py(v){ return PAD.t + (1 - v) * plotH; } // v in [0, 1]
 
   function drawCurve(T){
     cctx.clearRect(0, 0, CW, CH);
 
-    // Gridlines + axis labels
+    // Gridlines + y-axis tick labels (kept clear of the plot's left edge)
     cctx.strokeStyle = 'rgba(168,154,144,0.25)';
     cctx.fillStyle = '#a89a90';
-    cctx.font = '20px "IBM Plex Mono", monospace';
+    cctx.font = '18px "IBM Plex Mono", monospace';
     cctx.lineWidth = 1;
-    [-1, -0.5, 0, 0.5, 1].forEach(v => {
+    [0, 0.25, 0.5, 0.75, 1].forEach(v => {
       const y = py(v);
       cctx.beginPath();
       cctx.moveTo(PAD.l, y);
@@ -328,23 +336,29 @@ button.ghost{
       cctx.stroke();
       cctx.textAlign = 'right';
       cctx.textBaseline = 'middle';
-      cctx.fillText(v.toFixed(1), PAD.l - 8, y);
+      cctx.fillText(v.toFixed(2), PAD.l - 10, y);
     });
+
+    // x-axis tick labels, below the plot area (not touching the y-tick row)
     cctx.textAlign = 'center';
     cctx.textBaseline = 'top';
     [0, 0.5, 1].forEach(f => {
-      cctx.fillText((f * L).toFixed(1), px(f * L), CH - PAD.b + 8);
+      cctx.fillText((f * L).toFixed(1), px(f * L), CH - PAD.b + 10);
     });
+
+    // Axis titles, outside the tick-label bands
     cctx.save();
-    cctx.translate(14, PAD.t + plotH / 2);
+    cctx.translate(16, PAD.t + plotH / 2);
     cctx.rotate(-Math.PI / 2);
     cctx.textAlign = 'center';
+    cctx.textBaseline = 'alphabetic';
     cctx.fillText('T(x, t)', 0, 0);
     cctx.restore();
     cctx.textAlign = 'center';
-    cctx.fillText('x (m)', PAD.l + plotW / 2, CH - 14);
+    cctx.textBaseline = 'alphabetic';
+    cctx.fillText('x (m)', PAD.l + plotW / 2, CH - 12);
 
-    // Curve, coloured warm/cool by sign like the heat strip
+    // Curve
     cctx.beginPath();
     for (let i = 0; i < N; i++){
       const px_ = px(xs[i]), py_ = py(T[i]);
@@ -388,11 +402,24 @@ button.ghost{
     draw();
   });
 
+  playBtn.addEventListener('click', () => {
+    playing = !playing;
+    playBtn.textContent = playing ? 'Pause' : 'Play';
+    if (playing) { lastFrame = null; requestAnimationFrame(tick); }
+  });
+  resetBtn.addEventListener('click', () => {
+    t = 0;
+    lastFrame = null;
+    draw();
+  });
+
   function tick(ts){
+    if (!playing) return;
     if (lastFrame === null) lastFrame = ts;
     const dt = (ts - lastFrame) / 1000;
     lastFrame = ts;
-    t += dt * 0.5;
+    const speed = parseFloat(speedSlider.value);
+    t += dt * speed * 0.5;
     if (t > T_MAX) t = 0;
     draw();
     requestAnimationFrame(tick);
