@@ -53,7 +53,7 @@ For this particular problem, a PINN has limited practical value because the solu
   <img src="figures/forward_training.gif" width="95%">
 </p>
 
-**Fig 1:** *Forward problem.* With \(\alpha=0.18\) known, the PINN approximates the solution of the 1D heat equation using the governing equation and the initial and boundary conditions, without temperature measurements. The predicted temperature profiles are compared with the analytical solution at several times (dashed lines). The right panel shows the evolution training loss.
+**Fig 1:** *Forward problem with no data.* With \(\alpha=0.18\) known, the PINN approximates the solution of the 1D heat equation using the governing equation and the initial and boundary conditions, without any temperature measurements. The predicted temperature profiles are compared with the analytical solution at several times (dashed lines). The right panel shows the evolution training loss.
 
 <p align="center">
   <img src="figures/forward_data_training.gif" width="95%">
