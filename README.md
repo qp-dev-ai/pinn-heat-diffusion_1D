@@ -30,21 +30,13 @@ The one-dimensional **heat problem** studied here is well known, with an exact s
 
 ## Forward problem
 
-In the forward problem, the thermal diffusivity ($\alpha$), the initial condition, and the boundary conditions are known. The goal is to reconstruct the temperature field ($T(x,t)$). We first train the PINN using the heat equation and the prescribed conditions alone, then examine the effect of adding temperature measurements. In both cases, we compare its predictions with the analytical solution.
-
-For this particular problem, a PINN has limited practical value because the solution is already known analytically. PINNs may be more useful for problems without an analytical solution, such as complex flows governed by the Navier–Stokes equations, although established numerical solvers are also effective for many such forward problems. Here, the forward cases mainly serve as methodological tests before moving to the inverse problem, where $\alpha$ must be estimated from measurements.
+In the forward problem, the thermal diffusivity ($\alpha$), the initial condition, and the boundary conditions are known. The goal is to reconstruct the temperature field ($T(x,t)$). The PINN is trained using the heat equation and the prescribed conditions alone, and its predictions are compared with the analytical solution. The forward problem may also use both data and the physics to reconstruct the temperature profile (see [Details](#details-equation-method-parameter-identifiability-robustness-study)).
 
 <p align="center">
   <img src="figures/forward_training.gif" width="95%">
 </p>
 
 **Fig 1:** *Forward problem with no data.* With \(\alpha=0.18\) known, the PINN approximates the solution of the 1D heat equation using the governing equation and the initial and boundary conditions, without any temperature measurements. The predicted temperature profiles are compared with the analytical solution at several times (dashed lines). The right panel shows the evolution training loss.
-
-<p align="center">
-  <img src="figures/forward_data_training.gif" width="95%">
-</p>
-
-**Fig 1b:** *Forward problem, with data.* Same setup as Fig 1, but a handful of synthetic, artificially noised temperature measurements. Note that there is no data point on the $t=0$ (purple) curve: it is the fixed initial condition, not something to measure. The right panel separates the total, physics-only, and data-only components of the loss; total and data loss overlap once training converges, indicating that in general noisy data drives the training
 
 ## Inverse problem
 
@@ -81,6 +73,14 @@ The initial conditions are:
 - $T(0, t) = 0$ and $T(L, t) = 0$ for every $t$ up to $t_{\max}$: **both ends sit in an infinite $T=0$ reservoir**, so heat continuously drains out there.
 
 The exact solution is 𝑻(𝒙,𝒕) = 𝒔𝒊𝒏(𝝅𝒙/𝑳) × 𝒆<sup>−𝜶(𝝅/𝑳)²𝒕</sup> ($T$ is dimensionless, normalized so the initial temperature peak is 1, at t = 0 and x = L/2).
+
+### Forward problem with data
+
+<p align="center">
+  <img src="figures/forward_data_training.gif" width="95%">
+</p>
+
+**Fig 1b:** *Forward problem, with data.* Same setup as Fig 1, but a handful of synthetic, artificially noised temperature measurements. Note that there is no data point on the $t=0$ (purple) curve: it is the fixed initial condition, not something to measure. The right panel separates the total, physics-only, and data-only components of the loss; total and data loss overlap once training converges, indicating that in general noisy data drives the training.
 
 ### Method
 

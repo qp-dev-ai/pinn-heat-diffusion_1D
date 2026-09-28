@@ -98,6 +98,10 @@ select{
   border-radius:8px; padding:9px 10px; font-family:"IBM Plex Mono", monospace; font-size:13px;
 }
 input[type=range]{ width:100%; height:4px; background:var(--track); border-radius:2px; }
+.slider-caption{
+  display:flex; justify-content:space-between; gap:8px; margin-top:2px;
+  font-family:"IBM Plex Mono", monospace; font-size:10px; color:var(--muted);
+}
 .playbar{ display:flex; align-items:center; gap:12px; }
 button{
   font-family:"Manrope", sans-serif; font-weight:600; font-size:13px;
@@ -168,20 +172,13 @@ button.ghost{
 
     <div class="controls">
       <div class="row">
-        <div class="field">
-          <label for="alphaPreset">Preset <span class="sym">&alpha;</span></label>
-          <select id="alphaPreset">
-            <option value="0.05">&alpha; = 0.05 &mdash; slow (insulator-like)</option>
-            <option value="0.18" selected>&alpha; = 0.18</option>
-            <option value="0.4">&alpha; = 0.4</option>
-            <option value="0.7">&alpha; = 0.7</option>
-            <option value="1.0">&alpha; = 1.0 &mdash; fast</option>
-            <option value="custom">Custom&hellip;</option>
-          </select>
-        </div>
-        <div class="field">
+        <div class="field" style="min-width:100%;">
           <label for="alphaSlider"><span class="sym">&alpha;</span> (0.01 &ndash; 1.00)</label>
           <input type="range" id="alphaSlider" min="0.01" max="1" step="0.01" value="0.18">
+          <div class="slider-caption">
+            <span>0.01 &mdash; slow diffusion (insulator-like)</span>
+            <span>1.00 &mdash; fast diffusion (conductor-like)</span>
+          </div>
         </div>
       </div>
 
@@ -189,19 +186,6 @@ button.ghost{
         <div class="field">
           <label for="lengthSlider" id="lengthLabel">Bar length L = 1.0 m</label>
           <input type="range" id="lengthSlider" min="0.5" max="3" step="0.1" value="1">
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="field">
-          <label for="tmaxPreset">Preset t<sub>max</sub></label>
-          <select id="tmaxPreset">
-            <option value="0.5">t_max = 0.5 s</option>
-            <option value="1.5" selected>t_max = 1.5 s</option>
-            <option value="3">t_max = 3.0 s</option>
-            <option value="5">t_max = 5.0 s</option>
-            <option value="custom">Custom&hellip;</option>
-          </select>
         </div>
         <div class="field">
           <label for="tmaxSlider" id="tmaxLabel">Max time = 1.5 s</label>
@@ -254,7 +238,6 @@ button.ghost{
   const N_MODES = 60; // sine modes used to decompose T(x,0)
   let L = 1.0, T_MAX = 1.5;
 
-  const alphaPreset = document.getElementById('alphaPreset');
   const alphaSlider = document.getElementById('alphaSlider');
   const alphaReadout = document.getElementById('alphaReadout');
   const tReadout = document.getElementById('tReadout');
@@ -265,7 +248,6 @@ button.ghost{
   const speedSlider = document.getElementById('speed');
   const lengthSlider = document.getElementById('lengthSlider');
   const tmaxSlider = document.getElementById('tmaxSlider');
-  const tmaxPreset = document.getElementById('tmaxPreset');
   const lengthLabel = document.getElementById('lengthLabel');
   const tmaxLabel = document.getElementById('tmaxLabel');
 
@@ -433,12 +415,7 @@ button.ghost{
     draw();
   }
 
-  alphaPreset.addEventListener('change', () => {
-    if (alphaPreset.value === 'custom') return;
-    setAlpha(parseFloat(alphaPreset.value));
-  });
   alphaSlider.addEventListener('input', () => {
-    alphaPreset.value = 'custom';
     setAlpha(parseFloat(alphaSlider.value));
   });
 
@@ -470,12 +447,7 @@ button.ghost{
     lastFrame = null;
     draw();
   }
-  tmaxPreset.addEventListener('change', () => {
-    if (tmaxPreset.value === 'custom') return;
-    setTMax(parseFloat(tmaxPreset.value));
-  });
   tmaxSlider.addEventListener('input', () => {
-    tmaxPreset.value = 'custom';
     setTMax(parseFloat(tmaxSlider.value));
   });
 
