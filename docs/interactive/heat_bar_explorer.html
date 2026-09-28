@@ -76,6 +76,17 @@ label{
   font-family:"IBM Plex Mono", monospace; font-size:11px; letter-spacing:.06em;
   text-transform:uppercase; color:var(--muted);
 }
+/* text-transform:uppercase turns Greek lowercase alpha into capital alpha, which most fonts
+   render identically to Latin "A" -- keep the symbol itself out of the uppercase transform. */
+label .sym{ text-transform:none; }
+.chart-wrap{ display:flex; flex-direction:column; gap:4px; }
+.chart-ylabel{
+  font-family:"IBM Plex Mono", monospace; font-size:11px; color:var(--muted);
+}
+.chart-xlabel{
+  font-family:"IBM Plex Mono", monospace; font-size:11px; color:var(--muted);
+  text-align:center;
+}
 select, input[type=range]{ accent-color:var(--orange); }
 select{
   background:var(--panel-2); color:var(--text); border:1px solid var(--edge);
@@ -105,10 +116,9 @@ button.ghost{
   <p class="eyebrow">1D Heat Equation &mdash; Interactive</p>
   <h1>Heat Bar Explorer</h1>
   <p class="lede">
-    A bar of arbitrary material (metal, ceramic, etc.), ends held at T&nbsp;=&nbsp;0 &mdash; a
-    dimensionless, normalised temperature (not Kelvin or Celsius), representing a perfect heat
-    sink. Pick a starting temperature profile and &alpha;, and watch how fast the bar cools back
-    to zero.
+    A bar of arbitrary material (metal, ceramic, etc.), ends held at T&nbsp;=&nbsp;0
+    (dimensionless), representing a perfect heat sink. Pick a starting temperature profile and
+    <span class="sym">&alpha;</span>, and watch how fast the bar cools back to zero.
   </p>
   <div class="formula">
     &part;T&frasl;&part;t <b>=</b> &alpha; &part;&sup2;T&frasl;&part;x&sup2;
@@ -116,15 +126,16 @@ button.ghost{
     &nbsp;&nbsp;|&nbsp;&nbsp; T(x,0) = <span id="icFormula">sin(&pi;x&frasl;L)</span>
   </div>
   <p class="note" style="margin:-14px 0 24px;">
-    Units: x in <b>m</b> (bar length L&nbsp;=&nbsp;1&nbsp;m), &alpha; in <b>m&sup2;&frasl;s</b>, t in <b>s</b>.
-    T is dimensionless (normalised so the initial peak is 1).
+    Units: x in <b>m</b>, <span class="sym">&alpha;</span> in <b>m&sup2;&frasl;s</b>, t in <b>s</b>.
+    T is dimensionless (normalised so the initial peak is 1). Bar length L and max time
+    t<sub>max</sub> are adjustable below.
   </p>
 
   <div class="card">
     <div class="stage">
       <canvas id="bar" width="1000" height="160"></canvas>
       <div class="readout">
-        <span class="alpha-badge">&alpha; = <b id="alphaReadout">0.18</b> m&sup2;&frasl;s</span>
+        <span class="alpha-badge"><span class="sym">&alpha;</span> = <b id="alphaReadout">0.18</b> m&sup2;&frasl;s</span>
         <span>t = <b id="tReadout">0.00</b> s</span>
       </div>
     </div>
@@ -135,12 +146,16 @@ button.ghost{
       <span>T = 1</span>
     </div>
 
-    <canvas id="curve" width="1000" height="280"></canvas>
+    <div class="chart-wrap">
+      <div class="chart-ylabel">T(x, t)</div>
+      <canvas id="curve" width="1000" height="280"></canvas>
+      <div class="chart-xlabel">x (m)</div>
+    </div>
 
     <div class="controls">
       <div class="row">
         <div class="field">
-          <label for="alphaPreset">Preset &alpha;</label>
+          <label for="alphaPreset">Preset <span class="sym">&alpha;</span></label>
           <select id="alphaPreset">
             <option value="0.05">&alpha; = 0.05 &mdash; slow (insulator-like)</option>
             <option value="0.18" selected>&alpha; = 0.18</option>
@@ -151,8 +166,19 @@ button.ghost{
           </select>
         </div>
         <div class="field">
-          <label for="alphaSlider">&alpha; (0.01 &ndash; 1.00)</label>
+          <label for="alphaSlider"><span class="sym">&alpha;</span> (0.01 &ndash; 1.00)</label>
           <input type="range" id="alphaSlider" min="0.01" max="1" step="0.01" value="0.18">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="lengthSlider" id="lengthLabel">Bar length L = 1.0 m</label>
+          <input type="range" id="lengthSlider" min="0.5" max="3" step="0.1" value="1">
+        </div>
+        <div class="field">
+          <label for="tmaxSlider" id="tmaxLabel">Max time = 1.5 s</label>
+          <input type="range" id="tmaxSlider" min="0.5" max="5" step="0.1" value="1.5">
         </div>
       </div>
 
@@ -199,7 +225,7 @@ button.ghost{
   const CW = curveCanvas.width, CH = curveCanvas.height;
   const N = 400; // spatial resolution
   const N_MODES = 60; // sine modes used to decompose T(x,0)
-  const L = 1.0, T_MAX = 1.5;
+  let L = 1.0, T_MAX = 1.5;
 
   const alphaPreset = document.getElementById('alphaPreset');
   const alphaSlider = document.getElementById('alphaSlider');
@@ -210,17 +236,24 @@ button.ghost{
   const playBtn = document.getElementById('playBtn');
   const resetBtn = document.getElementById('resetBtn');
   const speedSlider = document.getElementById('speed');
+  const lengthSlider = document.getElementById('lengthSlider');
+  const tmaxSlider = document.getElementById('tmaxSlider');
+  const lengthLabel = document.getElementById('lengthLabel');
+  const tmaxLabel = document.getElementById('tmaxLabel');
 
-  const xs = new Float64Array(N);
-  for (let i = 0; i < N; i++) xs[i] = (i / (N - 1)) * L;
-
-  // sinTable[n-1][i] = sin(n*pi*x_i/L), n = 1..N_MODES
-  const sinTable = [];
-  for (let n = 1; n <= N_MODES; n++){
-    const row = new Float64Array(N);
-    for (let i = 0; i < N; i++) row[i] = Math.sin(n * Math.PI * xs[i] / L);
-    sinTable.push(row);
+  // xs and sinTable depend on L, so both are rebuilt whenever the bar length changes.
+  let xs, sinTable;
+  function rebuildGrid(){
+    xs = new Float64Array(N);
+    for (let i = 0; i < N; i++) xs[i] = (i / (N - 1)) * L;
+    sinTable = [];
+    for (let n = 1; n <= N_MODES; n++){
+      const row = new Float64Array(N);
+      for (let i = 0; i < N; i++) row[i] = Math.sin(n * Math.PI * xs[i] / L);
+      sinTable.push(row);
+    }
   }
+  rebuildGrid();
 
   // Higher harmonics use |sin(n pi x/L)| so T stays in [0, 1], like the fundamental mode,
   // instead of dipping negative on alternating lobes.
@@ -315,7 +348,9 @@ button.ghost{
   }
 
   // T(x) line chart: a single animated curve showing the spatial decay over time.
-  const PAD = { l: 56, r: 20, t: 20, b: 56 };
+  // Axis titles live in the HTML (.chart-ylabel / .chart-xlabel) above/below the canvas,
+  // so only the numeric ticks are drawn here -- nothing on the canvas can collide with them.
+  const PAD = { l: 46, r: 16, t: 14, b: 26 };
   const plotW = CW - PAD.l - PAD.r, plotH = CH - PAD.t - PAD.b;
   function px(x){ return PAD.l + (x / L) * plotW; }
   function py(v){ return PAD.t + (1 - v) * plotH; } // v in [0, 1]
@@ -323,7 +358,6 @@ button.ghost{
   function drawCurve(T){
     cctx.clearRect(0, 0, CW, CH);
 
-    // Gridlines + y-axis tick labels (kept clear of the plot's left edge)
     cctx.strokeStyle = 'rgba(168,154,144,0.25)';
     cctx.fillStyle = '#a89a90';
     cctx.font = '18px "IBM Plex Mono", monospace';
@@ -339,24 +373,11 @@ button.ghost{
       cctx.fillText(v.toFixed(2), PAD.l - 10, y);
     });
 
-    // x-axis tick labels, below the plot area (not touching the y-tick row)
     cctx.textAlign = 'center';
     cctx.textBaseline = 'top';
     [0, 0.5, 1].forEach(f => {
-      cctx.fillText((f * L).toFixed(1), px(f * L), CH - PAD.b + 10);
+      cctx.fillText((f * L).toFixed(1), px(f * L), CH - PAD.b + 8);
     });
-
-    // Axis titles, outside the tick-label bands
-    cctx.save();
-    cctx.translate(16, PAD.t + plotH / 2);
-    cctx.rotate(-Math.PI / 2);
-    cctx.textAlign = 'center';
-    cctx.textBaseline = 'alphabetic';
-    cctx.fillText('T(x, t)', 0, 0);
-    cctx.restore();
-    cctx.textAlign = 'center';
-    cctx.textBaseline = 'alphabetic';
-    cctx.fillText('x (m)', PAD.l + plotW / 2, CH - 12);
 
     // Curve
     cctx.beginPath();
@@ -401,6 +422,20 @@ button.ghost{
     lastFrame = null;
     draw();
   });
+
+  function onGeometryChange(){
+    L = parseFloat(lengthSlider.value);
+    T_MAX = parseFloat(tmaxSlider.value);
+    lengthLabel.textContent = `Bar length L = ${L.toFixed(1)} m`;
+    tmaxLabel.textContent = `Max time = ${T_MAX.toFixed(1)} s`;
+    rebuildGrid();
+    coeffs = fourierCoeffs(IC_PROFILES[icPreset.value].fn);
+    t = 0;
+    lastFrame = null;
+    draw();
+  }
+  lengthSlider.addEventListener('input', onGeometryChange);
+  tmaxSlider.addEventListener('input', onGeometryChange);
 
   playBtn.addEventListener('click', () => {
     playing = !playing;
