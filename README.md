@@ -46,7 +46,7 @@ In the inverse problem, only the initial and boundary conditions are known: the 
   <img src="figures/inverse_simple_training.gif" width="100%">
 </p>
 
-**Fig 2:** *Inverse problem.* Starting from a wrong guess ($\alpha_0 = 0.1$), the PINN recovers both the temperature field and the thermal diffusivity from 125 noisy measurements (10% noise, true $\alpha$ = $\alpha_{fit}$ = 0.3). 1) predicted profiles (solid lines) against the exact solution (dashed lines). 2) the total, physics-only, and data-only components of the loss. 3) the estimated thermal diffusivity $\alpha$ (solid line) converging toward $\alpha_{fit}$ (dashed line) — a classical least-squares fit of the exact solution to the data alone.
+**Fig 2:** *Inverse problem.* Starting from a wrong guess ($\alpha_0 = 0.1$), the PINN recovers both the temperature field and the thermal diffusivity from 125 noisy measurements (10% noise, true $\alpha$ = $\alpha_{fit}$ \approx 0.3). 1) predicted profiles (solid lines) against the exact solution (dashed lines). 2) the total, physics-only, and data-only components of the loss. 3) the estimated thermal diffusivity $\alpha$ (solid line) converging toward $\alpha_{fit}$ (dashed line) — a classical least-squares fit of the exact solution to the data alone.
 
 As with the forward problem, a PINN has limited advantage here on its own: this 1D case has a known analytical solution, so the classical fit above already recovers $\alpha$ about as well as the PINN does. PINNs become genuinely valuable for inverse problems on equations with **no analytical solution** — most real PDEs — where a classical curve fit isn't an option; folding the governing physics into the loss is what turns sparse, noisy measurements into a well-posed estimation problem there.
 
