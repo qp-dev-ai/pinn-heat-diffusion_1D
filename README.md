@@ -219,4 +219,4 @@ docs/           technical note, implementation details (PDF + LaTeX source), int
 
 ## Author
 
-**Quentin Pontalier**: engineering physicist moving into scientific machine learning. This is a personal research project; feedback and discussion are welcome.
+**Quentin Pontalier, PhD** — applied scientist with a background in experimental physics, physical modeling, and numerical simulation, now focused on scientific machine learning. This is a personal research project; feedback and discussion are welcome.
