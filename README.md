@@ -40,15 +40,13 @@ In the forward problem, the thermal diffusivity $\alpha$, the initial condition,
 
 ## Inverse problem
 
-In the inverse problem, only the initial and boundary conditions are known: the thermal diffusivity $\alpha$ and the temperature field $T(x,t)$ are both estimated together from sparse, noisy temperature measurements (see [Details](#details-equation-method-parameter-identifiability-robustness-study) for how the choice of $\alpha$ parameterization can make or break this).
+**Inverse problems are a particularly promising application of PINNs.** In this example, the initial and boundary conditions are known, while the thermal diffusivity $\alpha$ and the temperature field $T(x,t)$ must be inferred from sparse, noisy measurements. **The PINN learns the field and the parameter together, using the heat equation to guide the reconstruction where measurements alone provide too little information.** Rather than explicitly running a forward simulation for each candidate value of $\alpha$, it adjusts both within a single training process. The analytical solution makes this 1D case useful for validation; the broader interest lies in more complex systems without an analytical solution, where physical constraints can help extract information from limited or imperfect data. See Details for the choice of $\alpha$ parameterization and the robustness study.
 
 <p align="center">
   <img src="figures/inverse_simple_training.gif" width="100%">
 </p>
 
 **Fig 2:** *Inverse problem.* Starting from a wrong guess ($\alpha_0 = 0.1$), the PINN recovers both the temperature field and the thermal diffusivity from 125 noisy measurements (10% noise, true $\alpha$ = $\alpha_{fit}$ = 0.3). 1) predicted profiles (solid lines) against the exact solution (dashed lines). 2) the total, physics-only, and data-only components of the loss. 3) the estimated thermal diffusivity $\alpha$ (solid line) converging toward $\alpha_{fit}$ (dashed line) — a classical least-squares fit of the exact solution to the data alone.
-
-As with the forward problem, a PINN has limited advantage here on its own: this 1D case has a known analytical solution, so the classical fit above already recovers $\alpha$ about as well as the PINN does. PINNs become genuinely valuable for inverse problems on equations with **no analytical solution** — most real PDEs — where a classical curve fit isn't an option; folding the governing physics into the loss is what turns sparse, noisy measurements into a well-posed estimation problem there.
 
 <details>
 <summary>
